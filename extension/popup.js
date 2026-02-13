@@ -41,14 +41,50 @@
 
     let currentMode = "comment"; // "comment" | "job" | "settings"
 
+    // ─── Refresh System ────────────────────────────────────────────────────
+
+    /**
+     * Clear all content and refresh UI for the next post.
+     * @param {string} mode - "comment" or "job"
+     */
+    function refreshForNextPost(mode) {
+        if (mode === "comment") {
+            // Clear the post text input
+            postTextInput.value = "";
+            postTextInput.placeholder = "Paste a LinkedIn post here or click the AI button on a post…";
+            
+            // Clear the results
+            commentsContainer.innerHTML = "";
+            commentsContainer.classList.add("hidden");
+            
+            showToast("✨ Post cleared! Click AI button on next post or paste new content.");
+            postTextInput.focus();
+        } else if (mode === "job") {
+            // Clear the job text input
+            jobTextInput.value = "";
+            jobTextInput.placeholder = "Copy and paste the full job description here… The more detail, the better the analysis.";
+            
+            // Clear the results
+            jobResultsContainer.innerHTML = "";
+            jobResultsContainer.classList.add("hidden");
+            
+            showToast("✨ Job cleared! Click AI button on next job or paste new content.");
+            jobTextInput.focus();
+        }
+        
+        // Listen for new pending text from AI button click
+        setTimeout(() => {
+            loadPendingText();
+        }, 200);
+    }
+
     // ─── Initialization ────────────────────────────────────────────────────
 
     /**
-     * Initialize the popup: check backend health, load pending text, load profile.
+     * Initialize the popup: check backend health and load profile.
      */
     async function init() {
         checkBackendHealth();
-        loadPendingText();
         loadProfile();
     }
 
@@ -79,50 +115,6 @@
 
     function hideStatus() {
         statusBar.classList.add("hidden");
-    }
-
-    // ─── Load Pending Text from Content Script ─────────────────────────────
-
-    /**
-     * Check if the content script stored extracted text (from clicking the AI button).
-     */
-    function loadPendingText() {
-        chrome.storage.local.get(["pendingText", "pendingType"], (data) => {
-            if (data.pendingText) {
-                if (data.pendingType === "job") {
-                    switchMode("job");
-                    jobTextInput.value = data.pendingText;
-                } else {
-                    switchMode("comment");
-                    postTextInput.value = data.pendingText;
-                }
-                // Clear pending data
-                chrome.storage.local.set({ pendingText: "", pendingType: "comment" });
-            } else {
-                // Try to extract from active tab
-                fetchActiveTabContent();
-            }
-        });
-    }
-
-    /**
-     * Request the content script to extract text from the active LinkedIn tab.
-     */
-    function fetchActiveTabContent() {
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            if (!tabs[0] || !tabs[0].url?.includes("linkedin.com")) return;
-
-            chrome.tabs.sendMessage(tabs[0].id, { action: "GET_PAGE_CONTENT" }, (response) => {
-                if (chrome.runtime.lastError || !response) return;
-
-                if (response.type === "job" && response.text) {
-                    jobTextInput.value = response.text;
-                    if (currentMode !== "settings") switchMode("job");
-                } else if (response.text) {
-                    postTextInput.value = response.text;
-                }
-            });
-        });
     }
 
     // ─── Mode Switching ────────────────────────────────────────────────────
@@ -214,11 +206,16 @@
             commentsContainer.appendChild(card);
         });
 
-        // Add regenerate button at the bottom
+        // Add buttons container
+        const buttonContainer = document.createElement("div");
+        buttonContainer.style.display = "flex";
+        buttonContainer.style.gap = "8px";
+        buttonContainer.style.marginTop = "8px";
+
+        // Regenerate button
         const regenBtn = document.createElement("button");
         regenBtn.className = "secondary-btn";
-        regenBtn.style.width = "100%";
-        regenBtn.style.marginTop = "8px";
+        regenBtn.style.flex = "1";
         regenBtn.innerHTML = `
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px">
         <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
@@ -226,7 +223,22 @@
       Regenerate
     `;
         regenBtn.addEventListener("click", handleGenerateComments);
-        commentsContainer.appendChild(regenBtn);
+        buttonContainer.appendChild(regenBtn);
+
+        // Refresh for next post button
+        const refreshBtn = document.createElement("button");
+        refreshBtn.className = "secondary-btn";
+        refreshBtn.style.flex = "1";
+        refreshBtn.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px">
+        <path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+      </svg>
+      Next Post 🔄
+    `;
+        refreshBtn.addEventListener("click", () => refreshForNextPost("comment"));
+        buttonContainer.appendChild(refreshBtn);
+
+        commentsContainer.appendChild(buttonContainer);
 
         // Attach copy and insert listeners
         commentsContainer.querySelectorAll(".copy-btn").forEach((btn) => {
@@ -378,6 +390,27 @@
         if (copyNoteBtn) {
             copyNoteBtn.addEventListener("click", () => handleCopy(data.personalized_note, copyNoteBtn));
         }
+
+        // Add refresh button at the bottom
+        const buttonContainer = document.createElement("div");
+        buttonContainer.style.display = "flex";
+        buttonContainer.style.gap = "8px";
+        buttonContainer.style.marginTop = "12px";
+        buttonContainer.style.padding = "0 16px 16px 16px";
+
+        const refreshBtn = document.createElement("button");
+        refreshBtn.className = "secondary-btn";
+        refreshBtn.style.flex = "1";
+        refreshBtn.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px">
+        <path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+      </svg>
+      Next Job Post 🔄
+    `;
+        refreshBtn.addEventListener("click", () => refreshForNextPost("job"));
+        buttonContainer.appendChild(refreshBtn);
+
+        jobResultsContainer.appendChild(buttonContainer);
     }
 
     // ─── Profile / Settings ────────────────────────────────────────────────
@@ -774,7 +807,27 @@
         }
     }
 
+    // ─── Clear Button Handlers ─────────────────────────────────────────────
+
+    /**
+     * Set up event listeners for all clear buttons.
+     */
+    function setupClearButtons() {
+        document.querySelectorAll(".clear-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                const targetId = btn.getAttribute("data-target");
+                const element = document.getElementById(targetId);
+                if (element) {
+                    element.value = "";
+                    element.focus();
+                }
+            });
+        });
+    }
+
     // ─── Start ─────────────────────────────────────────────────────────────
 
     init();
+    setupClearButtons();
 })();

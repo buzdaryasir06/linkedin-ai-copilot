@@ -26,8 +26,16 @@
 
 ### Profile Settings
 - Save your skills, experience, and summary
+- **Auto-detect from LinkedIn Profile** button to extract data automatically
 - Auto-fills Job Mode with your stored profile
 - Persisted in local SQLite database
+- **Clear buttons** on all input fields for easy management
+
+### UI & Accessibility
+- Manual copy-paste workflow for maximum control
+- 8 accessible clear buttons with **ARIA labels** for screen readers
+- **Type-safe buttons** to prevent accidental form submission
+- Clean, minimalist LinkedIn-themed interface
 
 ---
 
@@ -171,6 +179,29 @@ curl -X POST http://localhost:8000/analyze-job \
 
 ---
 
-## 📜 License
+## � Recent Updates (v1.1.0)
+
+### ✨ New Features
+- **Auto-detect from LinkedIn Profile** — Automatically extract name, headline, skills, and experience from your LinkedIn profile page
+- **Clear Buttons** — 8 dedicated clear buttons for quick field management
+- **Profile Enhancement** — AI-powered suggestions to improve your professional summary
+
+### 🔧 Improvements
+- **Accessibility Compliance** — All clear buttons now include:
+  - `type="button"` attributes to prevent accidental form submission
+  - Unique `aria-label` attributes for screen reader support
+  - Valid SVG syntax for proper rendering
+- **Security Hardening** — Removed sensitive raw LLM response data from backend logs and error messages
+- **Job Analysis** — Fixed response validation to properly match LLM output fields
+- **Simplified UI** — Removed floating AI buttons in favor of clean copy-paste workflow
+
+### 🐛 Bug Fixes
+- Fixed PII exposure in backend logging and exception messages
+- Corrected job analysis response field mapping
+- Improved content extraction reliability with multiple selector fallbacks
+
+---
+
+## �📜 License
 
 MIT — Use freely for personal and commercial projects.

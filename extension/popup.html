@@ -53,8 +53,15 @@
     <!-- ─── Comment Mode Panel ─────────────────────────────────────────── -->
     <section id="commentPanel" class="panel">
         <div class="input-group">
-            <label for="postText">LinkedIn Post Text</label>
-            <textarea id="postText" placeholder="Paste a LinkedIn post here or click the AI button on a post…"
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label for="postText">LinkedIn Post Text</label>
+                <button type="button" class="clear-btn" data-target="postText" title="Clear LinkedIn Post Text" aria-label="Clear LinkedIn Post Text">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6"></path>
+                    </svg>
+                </button>
+            </div>
+            <textarea id="postText" placeholder="Paste a LinkedIn post here …"
                 rows="3"></textarea>
         </div>
         <button id="generateBtn" class="primary-btn">
@@ -77,19 +84,40 @@
             against your skills and tell you how well you match.</p>
 
         <div class="input-group">
-            <label for="jobText">Job Description <small>(paste from LinkedIn job post)</small></label>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label for="jobText">Job Description <small>(paste from LinkedIn job post)</small></label>
+                <button type="button" class="clear-btn" data-target="jobText" title="Clear Job Description" aria-label="Clear Job Description">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6"></path>
+                    </svg>
+                </button>
+            </div>
             <textarea id="jobText"
                 placeholder="Copy and paste the full job description here… The more detail, the better the analysis."
                 rows="4"></textarea>
         </div>
         <div class="input-row">
             <div class="input-group flex-1">
-                <label for="userSkills">Your Skills <small>(comma-separated)</small></label>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label for="userSkills">Your Skills <small>(comma-separated)</small></label>
+                    <button type="button" class="clear-btn" data-target="userSkills" title="Clear Your Skills" aria-label="Clear Your Skills">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6"></path>
+                        </svg>
+                    </button>
+                </div>
                 <input id="userSkills" type="text" placeholder="e.g. Python, React, Node.js, AWS, SQL…" />
             </div>
         </div>
         <div class="input-group">
-            <label for="userExperience">Your Experience <small>(brief summary)</small></label>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label for="userExperience">Your Experience <small>(brief summary)</small></label>
+                <button type="button" class="clear-btn" data-target="userExperience" title="Clear Your Experience" aria-label="Clear Your Experience">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6"></path>
+                    </svg>
+                </button>
+            </div>
             <input id="userExperience" type="text" placeholder="e.g. 2 years full-stack web development…" />
         </div>
         <p class="section-subtitle" style="margin: 0 0 8px; font-size: 11px; opacity: 0.7;">💡 Tip: Save your profile in
@@ -112,19 +140,47 @@
         <h2 class="section-title">Profile Settings</h2>
         <p class="section-subtitle">Save your profile for personalized job analysis.</p>
         <div class="input-group">
-            <label for="profileName">Full Name</label>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label for="profileName">Full Name</label>
+                <button type="button" class="clear-btn" data-target="profileName" title="Clear Full Name" aria-label="Clear Full Name">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6"></path>
+                    </svg>
+                </button>
+            </div>
             <input id="profileName" type="text" placeholder="Your name" />
         </div>
         <div class="input-group">
-            <label for="profileSkills">Skills <small>(comma-separated)</small></label>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label for="profileSkills">Skills <small>(comma-separated)</small></label>
+                <button type="button" class="clear-btn" data-target="profileSkills" title="Clear Profile Skills" aria-label="Clear Profile Skills">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6"></path>
+                    </svg>
+                </button>
+            </div>
             <input id="profileSkills" type="text" placeholder="Python, React, AWS…" />
         </div>
         <div class="input-group">
-            <label for="profileExperience">Experience Summary</label>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label for="profileExperience">Experience Summary</label>
+                <button type="button" class="clear-btn" data-target="profileExperience" title="Clear Experience Summary" aria-label="Clear Experience Summary">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6"></path>
+                    </svg>
+                </button>
+            </div>
             <textarea id="profileExperience" placeholder="Brief summary of your experience…" rows="2"></textarea>
         </div>
         <div class="input-group">
-            <label for="profileSummary">Professional Summary</label>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label for="profileSummary">Professional Summary</label>
+                <button type="button" class="clear-btn" data-target="profileSummary" title="Clear Professional Summary" aria-label="Clear Professional Summary">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6"></path>
+                    </svg>
+                </button>
+            </div>
             <textarea id="profileSummary" placeholder="Your professional bio…" rows="2"></textarea>
         </div>
         <p id="autoDetectStatus" class="section-subtitle" style="color: var(--linkedin-blue); display: none;"></p>

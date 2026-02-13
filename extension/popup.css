@@ -109,6 +109,37 @@ body::-webkit-scrollbar-thumb {
   color: var(--linkedin-blue);
 }
 
+.clear-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #e0e0e0;
+  background: linear-gradient(135deg, #f8f8f8 0%, #f0f0f0 100%);
+  border-radius: 6px;
+  color: #ff5555;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.clear-btn:hover {
+  background: linear-gradient(135deg, #ff5555 0%, #ff3333 100%);
+  color: white;
+  border-color: #ff3333;
+  transform: scale(1.1);
+  box-shadow: 0 3px 8px rgba(255, 51, 51, 0.25);
+}
+
+.clear-btn:active {
+  transform: scale(0.95);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 /* ─── Mode Toggle ────────────────────────────────────────────────────────── */
 
 .mode-toggle {

@@ -25,26 +25,33 @@ def _get_client() -> AsyncOpenAI:
     )
 
 
-async def _call_llm(messages: list[dict], temperature: float = 0.7) -> dict:
+async def _call_llm(
+    messages: list[dict],
+    temperature: float = 0.7,
+    max_tokens: int = 1024,
+    expected_keys: set[str] | None = None,
+) -> dict:
     """
     Send messages to Groq and parse the JSON response.
 
     Args:
         messages: Chat messages to send.
         temperature: Controls randomness. 0 = deterministic, 1 = creative.
+        max_tokens: Maximum tokens in the response.
+        expected_keys: Optional set of keys that must be present in the JSON response.
 
-    Raises ValueError if the response is not valid JSON.
+    Raises ValueError if the response is not valid JSON or missing expected keys.
     """
     settings = get_settings()
     client = _get_client()
 
-    logger.info("Calling Groq model=%s (temp=%.1f)", settings.groq_model, temperature)
+    logger.info("Calling Groq model=%s (temp=%.1f, max_tokens=%d)", settings.groq_model, temperature, max_tokens)
 
     response = await client.chat.completions.create(
         model=settings.groq_model,
         messages=messages,
         temperature=temperature,
-        max_tokens=1024,
+        max_tokens=max_tokens,
         response_format={"type": "json_object"},
     )
 
@@ -52,28 +59,38 @@ async def _call_llm(messages: list[dict], temperature: float = 0.7) -> dict:
     logger.debug("LLM raw response: %s", raw[:200])
 
     try:
-        return json.loads(raw)
+        data = json.loads(raw)
     except json.JSONDecodeError as e:
-        logger.error("Failed to parse LLM response as JSON: %s", e)
-        raise ValueError("AI returned an invalid response. Please try again.") from e
+        logger.error("Failed to parse LLM response as JSON: %s. Raw response: %s", e, raw)
+        raise ValueError(f"AI returned an invalid JSON response. Raw: {raw}") from e
+
+    if not isinstance(data, dict):
+        logger.error("LLM response is not a dict: %s. Raw: %s", type(data), raw)
+        raise ValueError(f"Expected JSON object (dict), got {type(data).__name__}. Raw: {raw}")
+
+    if expected_keys:
+        missing_keys = expected_keys - set(data.keys())
+        if missing_keys:
+            logger.error("LLM response missing keys: %s. Present keys: %s. Raw: %s", missing_keys, list(data.keys()), raw)
+            raise ValueError(
+                f"LLM response is missing required keys: {', '.join(sorted(missing_keys))}. "
+                f"Expected keys: {', '.join(sorted(expected_keys))}. Raw: {raw}"
+            )
+
+    return data
 
 
 async def generate_comments(post_text: str, tone: str | None = None) -> list[CommentSuggestion]:
     """
     Generate 3 LinkedIn comment suggestions for a given post.
-
-    Args:
-        post_text: The LinkedIn post text to comment on.
-        tone: Optional tone preference (supportive, professional, casual).
-
-    Returns:
-        List of 3 CommentSuggestion objects.
     """
     messages = build_comment_prompt(post_text, tone)
-    data = await _call_llm(messages)
+    # Validate that it returns 'comments' key
+    data = await _call_llm(messages, expected_keys={"comments"})
 
     comments = data.get("comments", [])
     if not comments:
+        # Fallback if the list is empty despite key presence
         raise ValueError("AI did not return any comments.")
 
     return [CommentSuggestion(**c) for c in comments[:5]]
@@ -86,17 +103,11 @@ async def analyze_job(
 ) -> JobAnalysisResponse:
     """
     Analyze a job posting against the user's profile.
-
-    Args:
-        job_text: The job posting description.
-        user_skills: List of user's current skills.
-        user_experience: Brief experience summary.
-
-    Returns:
-        JobAnalysisResponse with match details, note, tips, and similar roles.
     """
     messages = build_job_analysis_prompt(job_text, user_skills, user_experience)
-    data = await _call_llm(messages)
+    # The JobAnalysisResponse model expects these keys matching the prompt
+    expected_keys = {"matched_skills", "missing_skills", "match_percentage", "personalized_note", "resume_tips", "similar_roles"}
+    data = await _call_llm(messages, expected_keys=expected_keys)
 
     return JobAnalysisResponse(**data)
 
@@ -104,12 +115,6 @@ async def analyze_job(
 async def analyze_profile_text(raw_text: str) -> dict:
     """
     Analyze raw LinkedIn profile text and extract structured profile data.
-
-    Args:
-        raw_text: Raw text from a LinkedIn profile page.
-
-    Returns:
-        Dict with name, skills, experience, and summary.
     """
     messages = [
         {
@@ -143,20 +148,14 @@ Respond with ONLY valid JSON:
         },
     ]
 
-    data = await _call_llm(messages)
+    expected_keys = {"name", "skills", "experience", "summary"}
+    data = await _call_llm(messages, expected_keys=expected_keys)
     return data
 
 
 async def enhance_profile_text(raw_text: str) -> dict:
     """
     Analyze a LinkedIn profile and return enhancement suggestions.
-
-    Args:
-        raw_text: Raw text from a LinkedIn profile page.
-
-    Returns:
-        Dict with profile score, headline suggestion, about rewrite,
-        skills to add, and optimization tips.
     """
     messages = [
         {
@@ -194,7 +193,10 @@ Respond with ONLY valid JSON:
         },
     ]
 
-    data = await _call_llm(messages, temperature=0)
+    # Use max_tokens=4096 for this longer response and validate required keys
+    required_keys = {"profile_score", "headline_suggestion", "about_rewrite", "skills_to_add", "tips"}
+    data = await _call_llm(messages, temperature=0, max_tokens=4096, expected_keys=required_keys)
+
     return data
 
 
