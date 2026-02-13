@@ -138,6 +138,20 @@
                 Auto-detect from LinkedIn
             </button>
         </div>
+        <div class="btn-row" style="margin-bottom: 8px;">
+            <button id="enhanceProfileBtn" class="secondary-btn"
+                style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon
+                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+                ✨ Enhance My Profile with AI
+            </button>
+        </div>
+        <p id="enhanceStatus" class="section-subtitle" style="color: var(--linkedin-blue); display: none;"></p>
+        <div id="enhanceResultsContainer" class="results-container hidden">
+            <!-- Enhancement results rendered by JS -->
+        </div>
         <div class="btn-row">
             <button id="saveProfileBtn" class="primary-btn">Save Profile</button>
             <button id="backBtn" class="secondary-btn">Back</button>

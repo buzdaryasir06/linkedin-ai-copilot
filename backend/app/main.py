@@ -100,3 +100,15 @@ async def analyze_profile(data: dict):
         raise HTTPException(status_code=400, detail="Not enough profile text to analyze.")
     return await analyze_profile_text(raw_text)
 
+
+@app.post("/enhance-profile")
+async def enhance_profile(data: dict):
+    """Get AI-powered suggestions to improve a LinkedIn profile."""
+    from .services import enhance_profile_text
+    raw_text = data.get("raw_text", "")
+    if not raw_text or len(raw_text) < 20:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Not enough profile text to enhance.")
+    return await enhance_profile_text(raw_text)
+
+

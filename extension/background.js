@@ -12,6 +12,13 @@
 
 const API_BASE = "http://localhost:8000";
 
+// ─── Side Panel ─────────────────────────────────────────────────────────────
+
+// Open side panel when extension icon is clicked (stays open unlike popups)
+chrome.action.onClicked.addListener((tab) => {
+    chrome.sidePanel.open({ windowId: tab.windowId });
+});
+
 // ─── API Helper ─────────────────────────────────────────────────────────────
 
 /**
@@ -89,6 +96,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 // ── Profile Analysis ────────────────────────────────────────
                 case "ANALYZE_PROFILE": {
                     const data = await apiRequest("/analyze-profile", "POST", {
+                        raw_text: message.rawText,
+                    });
+                    sendResponse({ success: true, data });
+                    break;
+                }
+
+                // ── Profile Enhancement ─────────────────────────────────────
+                case "ENHANCE_PROFILE": {
+                    const data = await apiRequest("/enhance-profile", "POST", {
                         raw_text: message.rawText,
                     });
                     sendResponse({ success: true, data });

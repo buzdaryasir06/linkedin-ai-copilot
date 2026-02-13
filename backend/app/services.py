@@ -25,21 +25,25 @@ def _get_client() -> AsyncOpenAI:
     )
 
 
-async def _call_llm(messages: list[dict]) -> dict:
+async def _call_llm(messages: list[dict], temperature: float = 0.7) -> dict:
     """
     Send messages to Groq and parse the JSON response.
+
+    Args:
+        messages: Chat messages to send.
+        temperature: Controls randomness. 0 = deterministic, 1 = creative.
 
     Raises ValueError if the response is not valid JSON.
     """
     settings = get_settings()
     client = _get_client()
 
-    logger.info("Calling Groq model=%s", settings.groq_model)
+    logger.info("Calling Groq model=%s (temp=%.1f)", settings.groq_model, temperature)
 
     response = await client.chat.completions.create(
         model=settings.groq_model,
         messages=messages,
-        temperature=0.7,
+        temperature=temperature,
         max_tokens=1024,
         response_format={"type": "json_object"},
     )
@@ -141,4 +145,56 @@ Respond with ONLY valid JSON:
 
     data = await _call_llm(messages)
     return data
+
+
+async def enhance_profile_text(raw_text: str) -> dict:
+    """
+    Analyze a LinkedIn profile and return enhancement suggestions.
+
+    Args:
+        raw_text: Raw text from a LinkedIn profile page.
+
+    Returns:
+        Dict with profile score, headline suggestion, about rewrite,
+        skills to add, and optimization tips.
+    """
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are a LinkedIn profile optimization expert and personal branding coach. "
+                "You help professionals make their LinkedIn profiles stand out to recruiters, "
+                "clients, and connections. Be specific, actionable, and encouraging."
+            ),
+        },
+        {
+            "role": "user",
+            "content": f"""Analyze this LinkedIn profile and provide specific improvement suggestions.
+
+LinkedIn Profile:
+\"\"\"
+{raw_text[:2500]}
+\"\"\"
+
+Provide a comprehensive profile review with:
+1. **profile_score** – Rate the profile out of 100 based on completeness, clarity, and impact.
+2. **headline_suggestion** – Write a better, more compelling headline (max 120 chars). If it's already great, explain why.
+3. **about_rewrite** – Write an improved About section (3-4 paragraphs) that tells their story, highlights achievements, and includes a call-to-action. Make it sound human, not corporate.
+4. **skills_to_add** – List 5-8 skills they should add to their profile based on their experience.
+5. **tips** – 4-6 specific, actionable tips to improve their overall LinkedIn presence (not just profile text — include activity, engagement, networking advice).
+
+Respond with ONLY valid JSON:
+{{
+  "profile_score": 65,
+  "headline_suggestion": "...",
+  "about_rewrite": "...",
+  "skills_to_add": ["skill1", "skill2"],
+  "tips": ["tip1", "tip2", "tip3", "tip4"]
+}}""",
+        },
+    ]
+
+    data = await _call_llm(messages, temperature=0)
+    return data
+
 

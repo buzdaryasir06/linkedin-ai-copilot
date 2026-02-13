@@ -609,6 +609,171 @@
         });
     });
 
+    // ─── Enhance Profile ──────────────────────────────────────────────────
+
+    const enhanceProfileBtn = document.getElementById("enhanceProfileBtn");
+    const enhanceStatus = document.getElementById("enhanceStatus");
+    const enhanceResultsContainer = document.getElementById("enhanceResultsContainer");
+
+    enhanceProfileBtn.addEventListener("click", () => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (!tabs[0]) {
+                showToast("No active tab found.");
+                return;
+            }
+
+            enhanceStatus.textContent = "🔍 Scanning your LinkedIn profile...";
+            enhanceStatus.style.display = "block";
+            enhanceStatus.style.color = "var(--linkedin-blue)";
+            enhanceProfileBtn.disabled = true;
+            enhanceResultsContainer.classList.add("hidden");
+
+            chrome.tabs.sendMessage(tabs[0].id, { action: "EXTRACT_PROFILE" }, (response) => {
+                if (chrome.runtime.lastError) {
+                    enhanceStatus.textContent = "❌ Could not connect. Refresh your LinkedIn page and try again.";
+                    enhanceStatus.style.color = "var(--warning)";
+                    enhanceProfileBtn.disabled = false;
+                    return;
+                }
+
+                if (!response?.success) {
+                    enhanceStatus.textContent = "❌ " + (response?.error || "Could not read profile. Refresh LinkedIn and try again.");
+                    enhanceStatus.style.color = "var(--warning)";
+                    enhanceProfileBtn.disabled = false;
+                    return;
+                }
+
+                const profileData = response.data;
+                enhanceStatus.textContent = "🤖 AI is analyzing your profile for improvements...";
+
+                // Build raw text from extracted data
+                let rawText = "";
+                if (profileData.name) rawText += "Name: " + profileData.name + "\n";
+                if (profileData.headline) rawText += "Headline: " + profileData.headline + "\n";
+                if (profileData.about) rawText += "About: " + profileData.about + "\n";
+                if (profileData.experience) rawText += "Experience: " + profileData.experience + "\n";
+                if (profileData.skills) rawText += "Skills: " + profileData.skills + "\n";
+                if (!rawText && profileData.fullText) rawText = profileData.fullText;
+
+                chrome.runtime.sendMessage(
+                    { action: "ENHANCE_PROFILE", rawText },
+                    (aiResponse) => {
+                        enhanceProfileBtn.disabled = false;
+
+                        if (chrome.runtime.lastError || !aiResponse?.success) {
+                            enhanceStatus.textContent = "❌ " + (aiResponse?.error || "Enhancement failed. Try again.");
+                            enhanceStatus.style.color = "var(--warning)";
+                            return;
+                        }
+
+                        enhanceStatus.textContent = "✅ Here are your AI-powered profile improvement suggestions:";
+                        enhanceStatus.style.color = "var(--success)";
+                        renderEnhanceResults(aiResponse.data);
+                    }
+                );
+            });
+        });
+    });
+
+    function renderEnhanceResults(data) {
+        enhanceResultsContainer.innerHTML = "";
+        enhanceResultsContainer.classList.remove("hidden");
+
+        // Score color
+        let scoreColor, scoreEmoji, scoreVerdict;
+        const score = data.profile_score || 0;
+        if (score >= 80) {
+            scoreColor = "var(--success)";
+            scoreEmoji = "🟢";
+            scoreVerdict = "Excellent! Your profile is strong.";
+        } else if (score >= 60) {
+            scoreColor = "#F57F17";
+            scoreEmoji = "🟡";
+            scoreVerdict = "Good foundation — a few tweaks will make it shine.";
+        } else {
+            scoreColor = "var(--warning)";
+            scoreEmoji = "🔴";
+            scoreVerdict = "Needs work — follow these suggestions to stand out.";
+        }
+
+        const html = `
+      <!-- Profile Score -->
+      <div class="job-section" style="text-align:center; padding: 16px;">
+        <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light); margin-bottom: 4px;">Profile Score</div>
+        <div style="font-size: 32px; font-weight: 700; color: ${scoreColor};">${score}/100</div>
+        <div class="match-meter" style="margin: 8px 0;">
+          <div class="match-meter-fill" style="width: ${score}%; background: ${scoreColor};"></div>
+        </div>
+        <div style="font-size: 13px; color: ${scoreColor}; font-weight: 600;">${scoreEmoji} ${scoreVerdict}</div>
+      </div>
+
+      <!-- Headline Suggestion -->
+      ${data.headline_suggestion ? `
+      <div class="job-section">
+        <div class="job-section-title">💼 Suggested Headline</div>
+        <div style="font-size: 11px; color: var(--text-light); margin-bottom: 6px;">Replace your current headline with this to grab more attention.</div>
+        <div class="ai-note" style="font-weight: 600; font-size: 14px;">${escapeHtml(data.headline_suggestion)}</div>
+        <div style="margin-top: 8px;">
+          <button class="action-btn copy-headline-btn" title="Copy headline">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Copy Headline
+          </button>
+        </div>
+      </div>` : ""}
+
+      <!-- About Section Rewrite -->
+      ${data.about_rewrite ? `
+      <div class="job-section">
+        <div class="job-section-title">📝 Improved About Section</div>
+        <div style="font-size: 11px; color: var(--text-light); margin-bottom: 6px;">Copy this and paste it in your LinkedIn About section for a stronger first impression.</div>
+        <div class="ai-note" style="white-space: pre-line; font-size: 12px; line-height: 1.6;">${escapeHtml(data.about_rewrite)}</div>
+        <div style="margin-top: 8px;">
+          <button class="action-btn copy-about-btn" title="Copy about section">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Copy About Section
+          </button>
+        </div>
+      </div>` : ""}
+
+      <!-- Skills to Add -->
+      ${data.skills_to_add?.length ? `
+      <div class="job-section">
+        <div class="job-section-title">🎯 Skills to Add to Your Profile</div>
+        <div style="font-size: 11px; color: var(--text-light); margin-bottom: 6px;">Adding these skills makes you more discoverable by recruiters.</div>
+        <div class="skill-badges">
+          ${data.skills_to_add.map((s) => `<span class="skill-badge matched">${escapeHtml(s)}</span>`).join("")}
+        </div>
+      </div>` : ""}
+
+      <!-- Tips -->
+      ${data.tips?.length ? `
+      <div class="job-section">
+        <div class="job-section-title">🚀 Action Plan to Level Up</div>
+        <div style="font-size: 11px; color: var(--text-light); margin-bottom: 6px;">Follow these steps to boost your LinkedIn visibility and credibility.</div>
+        <ul class="tip-list">
+          ${data.tips.map((t) => `<li>${escapeHtml(t)}</li>`).join("")}
+        </ul>
+      </div>` : ""}
+    `;
+
+        enhanceResultsContainer.innerHTML = html;
+
+        // Copy handlers
+        const copyHeadlineBtn = enhanceResultsContainer.querySelector(".copy-headline-btn");
+        if (copyHeadlineBtn) {
+            copyHeadlineBtn.addEventListener("click", () => handleCopy(data.headline_suggestion, copyHeadlineBtn));
+        }
+
+        const copyAboutBtn = enhanceResultsContainer.querySelector(".copy-about-btn");
+        if (copyAboutBtn) {
+            copyAboutBtn.addEventListener("click", () => handleCopy(data.about_rewrite, copyAboutBtn));
+        }
+    }
+
     // ─── Start ─────────────────────────────────────────────────────────────
 
     init();
