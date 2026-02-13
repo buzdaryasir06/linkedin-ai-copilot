@@ -1,0 +1,578 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   popup.css – LinkedIn AI Copilot Extension Styles
+   Professional, minimalistic UI with LinkedIn-style colors.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Reset & Base ───────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --linkedin-blue: #0A66C2;
+  --linkedin-blue-hover: #004182;
+  --linkedin-blue-light: #E8F0FE;
+  --linkedin-blue-12: rgba(10, 102, 194, 0.12);
+  --text-primary: #191919;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --bg-white: #FFFFFF;
+  --bg-light: #F3F2EF;
+  --bg-card: #FFFFFF;
+  --border-light: #E0E0E0;
+  --border-focus: #0A66C2;
+  --success: #057642;
+  --success-bg: #E6F4ED;
+  --warning: #B24020;
+  --warning-bg: #FEF3F0;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 20px;
+  --transition: 0.2s ease;
+}
+
+body {
+  width: 400px;
+  min-height: 300px;
+  max-height: 580px;
+  overflow-y: auto;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--bg-light);
+  line-height: 1.5;
+}
+
+body::-webkit-scrollbar {
+  width: 4px;
+}
+
+body::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 2px;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-white);
+  border-bottom: 1px solid var(--border-light);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-icon {
+  color: var(--linkedin-blue);
+}
+
+.header h1 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.icon-btn:hover {
+  background: var(--bg-light);
+  color: var(--linkedin-blue);
+}
+
+/* ─── Mode Toggle ────────────────────────────────────────────────────────── */
+
+.mode-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 8px 16px;
+  background: var(--bg-white);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.mode-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--border-light);
+  background: var(--bg-white);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.mode-btn:hover {
+  border-color: var(--linkedin-blue);
+  color: var(--linkedin-blue);
+}
+
+.mode-btn.active {
+  background: var(--linkedin-blue);
+  border-color: var(--linkedin-blue);
+  color: var(--bg-white);
+}
+
+/* ─── Status Bar ─────────────────────────────────────────────────────────── */
+
+.status-bar {
+  padding: 6px 16px;
+  font-size: 11px;
+  font-weight: 500;
+  text-align: center;
+  transition: var(--transition);
+}
+
+.status-bar.connected {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.status-bar.disconnected {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+/* ─── Panels ─────────────────────────────────────────────────────────────── */
+
+.panel {
+  padding: 16px;
+}
+
+/* ─── Input Components ───────────────────────────────────────────────────── */
+
+.input-group {
+  margin-bottom: 12px;
+}
+
+.input-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.input-group label small {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.input-group textarea,
+.input-group input[type="text"] {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--bg-white);
+  transition: var(--transition);
+  resize: vertical;
+}
+
+.input-group textarea:focus,
+.input-group input[type="text"]:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--linkedin-blue-12);
+}
+
+.input-group textarea::placeholder,
+.input-group input::placeholder {
+  color: var(--text-muted);
+}
+
+.input-row {
+  display: flex;
+  gap: 12px;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+/* ─── Buttons ────────────────────────────────────────────────────────────── */
+
+.primary-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: var(--linkedin-blue);
+  color: var(--bg-white);
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.primary-btn:hover {
+  background: var(--linkedin-blue-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.secondary-btn {
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--linkedin-blue);
+  border: 1.5px solid var(--linkedin-blue);
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.secondary-btn:hover {
+  background: var(--linkedin-blue-light);
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-row .primary-btn {
+  flex: 1;
+}
+
+/* ─── Results Container ──────────────────────────────────────────────────── */
+
+.results-container {
+  margin-top: 16px;
+}
+
+/* ─── Comment Cards ──────────────────────────────────────────────────────── */
+
+.comment-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  margin-bottom: 10px;
+  transition: var(--transition);
+}
+
+.comment-card:hover {
+  box-shadow: var(--shadow-sm);
+  border-color: var(--linkedin-blue);
+}
+
+.comment-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.comment-style-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: var(--radius-pill);
+  background: var(--linkedin-blue-light);
+  color: var(--linkedin-blue);
+}
+
+.comment-style-badge.appreciation {
+  background: #FFF8E1;
+  color: #F57F17;
+}
+
+.comment-style-badge.project {
+  background: #E0F2F1;
+  color: #00897B;
+}
+
+.comment-text {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.comment-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-pill);
+  background: var(--bg-white);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.action-btn:hover {
+  border-color: var(--linkedin-blue);
+  color: var(--linkedin-blue);
+  background: var(--linkedin-blue-light);
+}
+
+.action-btn.copied {
+  background: var(--success-bg);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+/* ─── Job Analysis Results ───────────────────────────────────────────────── */
+
+.job-section {
+  margin-bottom: 16px;
+}
+
+.job-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.match-meter {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-light);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.match-meter-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--linkedin-blue), #38B2AC);
+  transition: width 0.6s ease;
+}
+
+.match-percentage {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--linkedin-blue);
+  margin-bottom: 4px;
+}
+
+.skill-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.skill-badge {
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+.skill-badge.matched {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.skill-badge.missing {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.ai-note {
+  background: var(--linkedin-blue-light);
+  border-left: 3px solid var(--linkedin-blue);
+  padding: 10px 12px;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-primary);
+}
+
+.tip-list {
+  list-style: none;
+  padding: 0;
+}
+
+.tip-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--bg-light);
+}
+
+.tip-list li:last-child {
+  border-bottom: none;
+}
+
+.tip-list li::before {
+  content: "→";
+  color: var(--linkedin-blue);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.role-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.role-chip {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--bg-light);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-pill);
+  color: var(--text-primary);
+}
+
+/* ─── Section Title (Settings) ───────────────────────────────────────────── */
+
+.section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.section-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+/* ─── Loading Overlay ────────────────────────────────────────────────────── */
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+}
+
+.loading-overlay p {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--linkedin-blue);
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--linkedin-blue-light);
+  border-top-color: var(--linkedin-blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ─── Utility ────────────────────────────────────────────────────────────── */
+
+.hidden {
+  display: none !important;
+}
+
+/* ─── Toast Notification ─────────────────────────────────────────────────── */
+
+.toast {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(60px);
+  padding: 8px 20px;
+  background: var(--text-primary);
+  color: var(--bg-white);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

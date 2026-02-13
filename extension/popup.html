@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=400, initial-scale=1.0" />
+    <title>LinkedIn AI Copilot</title>
+    <link rel="stylesheet" href="popup.css" />
+</head>
+
+<body>
+    <!-- ─── Header ─────────────────────────────────────────────────────── -->
+    <header class="header">
+        <div class="header-brand">
+            <svg class="header-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <path
+                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+            <h1>LinkedIn AI Copilot</h1>
+        </div>
+        <button id="settingsBtn" class="icon-btn" title="Profile Settings">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3" />
+                <path
+                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+        </button>
+    </header>
+
+    <!-- ─── Mode Toggle ────────────────────────────────────────────────── -->
+    <div class="mode-toggle">
+        <button id="commentModeBtn" class="mode-btn active" data-mode="comment">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            Comment Mode
+        </button>
+        <button id="jobModeBtn" class="mode-btn" data-mode="job">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+            </svg>
+            Job Mode
+        </button>
+    </div>
+
+    <!-- ─── Backend Status ─────────────────────────────────────────────── -->
+    <div id="statusBar" class="status-bar hidden">
+        <span id="statusText"></span>
+    </div>
+
+    <!-- ─── Comment Mode Panel ─────────────────────────────────────────── -->
+    <section id="commentPanel" class="panel">
+        <div class="input-group">
+            <label for="postText">LinkedIn Post Text</label>
+            <textarea id="postText" placeholder="Paste a LinkedIn post here or click the AI button on a post…"
+                rows="3"></textarea>
+        </div>
+        <button id="generateBtn" class="primary-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path
+                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+            Generate Comments
+        </button>
+
+        <div id="commentsContainer" class="results-container hidden">
+            <!-- Comment cards rendered by JS -->
+        </div>
+    </section>
+
+    <!-- ─── Job Mode Panel ─────────────────────────────────────────────── -->
+    <section id="jobPanel" class="panel hidden">
+        <h2 class="section-title" style="margin: 0 0 4px 0; font-size: 14px;">🎯 Job Match Analyzer</h2>
+        <p class="section-subtitle" style="margin: 0 0 12px 0;">Paste a job description below — AI will compare it
+            against your skills and tell you how well you match.</p>
+
+        <div class="input-group">
+            <label for="jobText">Job Description <small>(paste from LinkedIn job post)</small></label>
+            <textarea id="jobText"
+                placeholder="Copy and paste the full job description here… The more detail, the better the analysis."
+                rows="4"></textarea>
+        </div>
+        <div class="input-row">
+            <div class="input-group flex-1">
+                <label for="userSkills">Your Skills <small>(comma-separated)</small></label>
+                <input id="userSkills" type="text" placeholder="e.g. Python, React, Node.js, AWS, SQL…" />
+            </div>
+        </div>
+        <div class="input-group">
+            <label for="userExperience">Your Experience <small>(brief summary)</small></label>
+            <input id="userExperience" type="text" placeholder="e.g. 2 years full-stack web development…" />
+        </div>
+        <p class="section-subtitle" style="margin: 0 0 8px; font-size: 11px; opacity: 0.7;">💡 Tip: Save your profile in
+            Settings to auto-fill your skills & experience here.</p>
+        <button id="analyzeBtn" class="primary-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            Analyze My Fit
+        </button>
+
+        <div id="jobResultsContainer" class="results-container hidden">
+            <!-- Job analysis results rendered by JS -->
+        </div>
+    </section>
+
+    <!-- ─── Settings Panel ─────────────────────────────────────────────── -->
+    <section id="settingsPanel" class="panel hidden">
+        <h2 class="section-title">Profile Settings</h2>
+        <p class="section-subtitle">Save your profile for personalized job analysis.</p>
+        <div class="input-group">
+            <label for="profileName">Full Name</label>
+            <input id="profileName" type="text" placeholder="Your name" />
+        </div>
+        <div class="input-group">
+            <label for="profileSkills">Skills <small>(comma-separated)</small></label>
+            <input id="profileSkills" type="text" placeholder="Python, React, AWS…" />
+        </div>
+        <div class="input-group">
+            <label for="profileExperience">Experience Summary</label>
+            <textarea id="profileExperience" placeholder="Brief summary of your experience…" rows="2"></textarea>
+        </div>
+        <div class="input-group">
+            <label for="profileSummary">Professional Summary</label>
+            <textarea id="profileSummary" placeholder="Your professional bio…" rows="2"></textarea>
+        </div>
+        <p id="autoDetectStatus" class="section-subtitle" style="color: var(--linkedin-blue); display: none;"></p>
+        <div class="btn-row" style="margin-bottom: 8px;">
+            <button id="autoDetectBtn" class="secondary-btn"
+                style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                </svg>
+                Auto-detect from LinkedIn
+            </button>
+        </div>
+        <div class="btn-row">
+            <button id="saveProfileBtn" class="primary-btn">Save Profile</button>
+            <button id="backBtn" class="secondary-btn">Back</button>
+        </div>
+    </section>
+
+    <!-- ─── Loading Overlay ────────────────────────────────────────────── -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p>AI is thinking…</p>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>
