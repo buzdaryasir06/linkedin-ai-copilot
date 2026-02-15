@@ -92,7 +92,7 @@ Error Codes: 200, 400, 422, 500
 
 ## 📚 Documentation (7 New Files)
 
-### 1. **SYSTEM_OVERVIEW.md** (This File)
+### 1. **00_START_HERE.md** (This File)
 - ✅ Complete delivery summary
 - ✅ What was built and why
 - ✅ Quick reference guide
@@ -286,13 +286,15 @@ plus: **Executive Summary** (2-3 sentence action plan)
 
 **After Implementing Top 3 Recommendations (4 weeks):**
 
-| Metric | Improvement |
+⚠️ **Note:** Results shown are estimated and vary based on profile baseline, engagement consistency, and market conditions.
+
+| Metric | Estimated Improvement |
 |--------|-------------|
-| Recruiter Messages | +300-400% |
-| Profile Views | +200-300% |
-| Interview Calls | +300%+ |
+| Recruiter Messages | Significant increase |
+| Profile Views | 2-3x increase possible |
+| Interview Calls | Notable increase |
 | Profile Score | +2-3 points |
-| Time to Offer | -25-50% |
+| Time to Offer | -25-50% reduction |
 
 ---
 
@@ -322,7 +324,7 @@ plus: **Executive Summary** (2-3 sentence action plan)
 - [x] Rewritten examples (not templates)
 - [x] Role-tailored analysis (considers target position)
 - [x] Authority-focused (credibility signals)
-- [x] Recruiter-optimized (AIATS compatible)
+- [x] Recruiter-optimized (ATS compatible)
 - [x] Metric-driven (quantified where possible)
 - [x] Actionable recommendations (ranked by priority)
 
@@ -425,7 +427,7 @@ DONE! → Ready to use
 ✅ Comprehensive logging  
 ✅ 15-30 second response time  
 ✅ Works with Groq free tier  
-✅ Zero hallucinations (structured output)  
+✅ Reduced hallucinations (structured output)  
 
 ---
 

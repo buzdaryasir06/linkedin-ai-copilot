@@ -425,6 +425,8 @@ async function enhanceProfile(profileData) {
 
 ```python
 # The endpoint is already implemented
+from fastapi import HTTPException
+
 @app.post("/enhance-profile-advanced", response_model=ProfileEnhancementResponse)
 async def enhance_profile_advanced(request: ProfileEnhancementRequest):
     # Returns structured ProfileEnhancementResponse
@@ -433,14 +435,17 @@ async def enhance_profile_advanced(request: ProfileEnhancementRequest):
 ### Error Handling
 
 ```python
+from fastapi import HTTPException
+
 try:
-  result = await enhance_profile_service(...)
+    result = await enhance_profile_service(...)
+    return result  # Returns ProfileEnhancementResponse
 except ValueError as e:
-  # LLM validation error
-  return {"error": str(e), "status": 400}
+    # LLM validation error
+    raise HTTPException(status_code=422, detail=f"Validation error: {str(e)}")
 except Exception as e:
-  # Unexpected error
-  return {"error": "Enhancement failed", "status": 500}
+    # Unexpected error
+    raise HTTPException(status_code=500, detail="Enhancement failed: internal server error")
 ```
 
 ---
@@ -464,4 +469,4 @@ except Exception as e:
 ---
 
 **Version:** 1.0  
-**Last Updated:** February 2025
+**Last Updated:** February 2026

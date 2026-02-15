@@ -250,7 +250,8 @@ async def enhance_profile(
         "executive_summary",
     }
     
-    # Use higher temperature for creativity in rewrites, but still structured
+    # Use balanced temperature (0.5) for consistency + structured output
+    # Lower than default (0.7) prioritizes deterministic rewrites
     # Use max_tokens=8000 for comprehensive response
     data = await _call_llm(
         messages,

@@ -253,6 +253,18 @@ What makes your profile stand out:
 }
 ```
 
+### 8. **Executive Summary**
+
+A concise 2-3 sentence summary of the key opportunities and action items:
+
+```json
+{
+  "executive_summary": "Your profile undersells solid backend engineering foundation. The biggest opportunity: reposition existing experience as preparation for AI/ML backend roles, and start featuring ML-adjacent learning. With headline refresh, about rewrite, and experience enhancement, you'll be attracting recruiters in ML-focused startups within 4 weeks."
+}
+```
+
+**Purpose:** Provides a quick overview of the main recommendations and expected timeline without needing to read all sections.
+
 ---
 
 ## API Endpoint
@@ -388,5 +400,5 @@ A: Estimate conservatively. "Improved query performance by 15-20%" is better tha
 ---
 
 **Version:** 1.0  
-**Last Updated:** February 2025  
+**Last Updated:** February 2026  
 **Maintained By:** LinkedIn AI Co-Pilot Team

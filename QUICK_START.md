@@ -78,9 +78,19 @@ payload = {
     "years_of_experience": 5
 }
 
-response = requests.post(url, json=payload)
-result = response.json()
-print(result)
+try:
+    response = requests.post(url, json=payload, timeout=30)
+    response.raise_for_status()  # Raise error if status code indicates failure
+    result = response.json()
+    print(result)
+except requests.exceptions.Timeout:
+    print(f"Error: Request timed out after 30 seconds")
+except requests.exceptions.HTTPError as e:
+    print(f"HTTP Error: {response.status_code} - {response.text}")
+except requests.exceptions.RequestException as e:
+    print(f"Error: Failed to complete request - {str(e)}")
+except ValueError as e:
+    print(f"Error: Invalid JSON response - {str(e)}")
 ```
 
 ### Using JavaScript/Node.js
@@ -94,13 +104,33 @@ const payload = {
     years_of_experience: 5
 };
 
-fetch("http://localhost:8000/enhance-profile-advanced", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-})
-.then(r => r.json())
-.then(data => console.log(data));
+async function fetchEnhancement() {
+    try {
+        const response = await fetch("http://localhost:8000/enhance-profile-advanced", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log(data);
+    } catch (error) {
+        if (error instanceof SyntaxError) {
+            console.error("Error: Invalid JSON response -", error.message);
+        } else if (error instanceof TypeError) {
+            console.error("Error: Network request failed -", error.message);
+        } else {
+            console.error("Error:", error.message);
+        }
+    }
+}
+
+fetchEnhancement();
 ```
 
 ---
