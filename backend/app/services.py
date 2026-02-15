@@ -10,8 +10,8 @@ import logging
 from openai import AsyncOpenAI
 
 from .config import get_settings
-from .prompts import build_comment_prompt, build_job_analysis_prompt
-from .models import CommentSuggestion, JobAnalysisResponse
+from .prompts import build_comment_prompt, build_job_analysis_prompt, build_profile_enhancement_prompt
+from .models import CommentSuggestion, JobAnalysisResponse, ProfileEnhancementResponse
 
 logger = logging.getLogger(__name__)
 
@@ -198,5 +198,68 @@ Respond with ONLY valid JSON:
     data = await _call_llm(messages, temperature=0, max_tokens=4096, expected_keys=required_keys)
 
     return data
+
+
+async def enhance_profile(
+    current_headline: str,
+    about_section: str,
+    experience_descriptions: list[str],
+    current_skills: list[str],
+    target_role: str,
+    years_of_experience: int,
+    featured_section: str | None = None,
+    industry: str | None = None,
+    company_experience: str | None = None,
+) -> ProfileEnhancementResponse:
+    """
+    Comprehensive profile enhancement with structured, actionable, high-impact suggestions.
+    
+    Returns detailed optimization across:
+    - Headline optimization with keyword suggestions
+    - About section enhancement with positioning and authority
+    - Experience section improvements with metrics and leadership focus
+    - Skills strategy with niche positioning
+    - Recruiter optimization for discoverability
+    - Differentiation analysis for competitive positioning
+    - Overall profile score with ranked priorities
+    
+    All suggestions are specific, rewritten examples with clear reasoning.
+    Tailored to the target role with focus on standing out in AI/Backend markets.
+    """
+    messages = build_profile_enhancement_prompt(
+        current_headline=current_headline,
+        about_section=about_section,
+        experience_descriptions=experience_descriptions,
+        current_skills=current_skills,
+        featured_section=featured_section,
+        target_role=target_role,
+        years_of_experience=years_of_experience,
+        industry=industry,
+        company_experience=company_experience,
+    )
+    
+    # Expected keys from the comprehensive profile enhancement prompt
+    expected_keys = {
+        "headline_optimization",
+        "about_section_enhancement",
+        "experience_improvements",
+        "skills_strategy",
+        "recruiter_optimization",
+        "differentiation_analysis",
+        "overall_score",
+        "executive_summary",
+    }
+    
+    # Use higher temperature for creativity in rewrites, but still structured
+    # Use max_tokens=8000 for comprehensive response
+    data = await _call_llm(
+        messages,
+        temperature=0.5,
+        max_tokens=8000,
+        expected_keys=expected_keys,
+    )
+    
+    logger.info("Profile enhancement completed for target role: %s", target_role)
+    return ProfileEnhancementResponse(**data)
 
 

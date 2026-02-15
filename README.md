@@ -24,6 +24,21 @@
 - Provides **resume improvement tips**
 - Suggests **similar roles** to explore
 
+### 🎯 Profile Enhancement System (NEW!)
+- **Comprehensive profile optimization** with structured, actionable suggestions
+- Analyzes **6 core profile sections**: Headline, About, Experience, Skills, Featured, Context
+- Delivers **7 detailed improvement sections** (not generic advice):
+  - **Headline Optimization** — High-impact rewrites with keyword strategy
+  - **About Section Enhancement** — Professional summary with positioning & authority
+  - **Experience Improvements** — Convert bullets to impact-driven CAR format
+  - **Skills Strategy** — Skill recommendations and optimal ordering for target role
+  - **Recruiter Optimization** — Keywords and positioning for discoverability
+  - **Differentiation Analysis** — Tone, authority signals, competitive advantages
+  - **Profile Score** — 0-10 rating with ranked improvement priorities
+- **Role-tailored suggestions** for AI Engineers, Backend Devs, Marketing, Leadership, etc.
+- **Competitive positioning** for standing out in selective markets
+- See [PROFILE_ENHANCEMENT_GUIDE.md](./PROFILE_ENHANCEMENT_GUIDE.md) for full details
+
 ### Profile Settings
 - Save your skills, experience, and summary
 - **Auto-detect from LinkedIn Profile** button to extract data automatically
@@ -144,6 +159,7 @@ INFO:     Uvicorn running on http://127.0.0.1:8000
 |--------|----------|-------------|
 | `POST` | `/generate-comment` | Generate 3 comment suggestions |
 | `POST` | `/analyze-job` | Analyze a job posting |
+| `POST` | `/enhance-profile-advanced` | **[NEW]** Comprehensive profile enhancement with structured suggestions |
 | `GET` | `/profile` | Get stored user profile |
 | `PUT` | `/profile` | Update user profile |
 | `GET` | `/health` | Health check |
@@ -168,6 +184,67 @@ curl -X POST http://localhost:8000/analyze-job \
   }'
 ```
 
+### Example: Enhance Profile (NEW!)
+
+```bash
+curl -X POST http://localhost:8000/enhance-profile-advanced \
+  -H "Content-Type: application/json" \
+  -d '{
+    "current_headline": "Python Developer | Open to Opportunities",
+    "about_section": "Experienced developer passionate about building scalable systems...",
+    "experience_descriptions": ["Developed REST APIs", "Led a team", "Optimized databases"],
+    "current_skills": ["Python", "FastAPI", "PostgreSQL"],
+    "target_role": "AI/ML Backend Engineer",
+    "years_of_experience": 5,
+    "industry": "FinTech / SaaS",
+    "company_experience": "Series A startups"
+  }'
+```
+
+Response includes:
+- Headline optimization with keywords
+- Enhanced about section with positioning
+- Experience improvements with impact metrics
+- Skills strategy with niche positioning
+- Recruiter optimization keywords
+- Profile score (0-10) with ranked priorities
+
+See [PROFILE_ENHANCEMENT_EXAMPLES.md](./PROFILE_ENHANCEMENT_EXAMPLES.md) for complete real-world examples.
+
+---
+
+## � Recent Updates (v2.0.0)
+
+### ✨ Profile Enhancement System (Major Feature!)
+- **Comprehensive profile optimization** with 7 detailed analysis sections
+- **Rewritten examples** for every suggestion (headline, about, experience, skills)
+- **Role-tailored recommendations** for target positions
+- **Recruiter optimization** with keyword strategy for discoverability
+- **Differentiation analysis** for competitive positioning
+- **Profile scoring** (0-10) with ranked improvement priorities
+- **No generic advice** — every suggestion is specific and actionable
+- See [PROFILE_ENHANCEMENT_GUIDE.md](./PROFILE_ENHANCEMENT_GUIDE.md) for full documentation
+- Real-world examples in [PROFILE_ENHANCEMENT_EXAMPLES.md](./PROFILE_ENHANCEMENT_EXAMPLES.md)
+
+### 🔄 Architecture Improvements
+- **Enhanced prompting** with expert-level system instructions
+- **Structured output** with validated Pydantic models
+- **Role-aware analysis** that understands market positioning
+- **Authority signal detection** and recommendations
+- **Competitive positioning framework** for tech talent markets
+
+### ✨ Previous Features (v1.1.0)
+- **Auto-detect from LinkedIn Profile** — Automatically extract name, headline, skills, and experience
+- **Clear Buttons** — Quick field management with accessibility compliance
+
+---
+
+## 📚 Documentation
+
+- **[PROFILE_ENHANCEMENT_GUIDE.md](./PROFILE_ENHANCEMENT_GUIDE.md)** — Comprehensive guide to the Profile Enhancement System
+- **[PROFILE_ENHANCEMENT_EXAMPLES.md](./PROFILE_ENHANCEMENT_EXAMPLES.md)** — Real-world examples with full request/response
+- **README.md** — This file
+
 ---
 
 ## 🔒 Security Notes
@@ -179,14 +256,14 @@ curl -X POST http://localhost:8000/analyze-job \
 
 ---
 
-## � Recent Updates (v1.1.0)
+## 📜 Recent Updates History (v1.1.0)
 
-### ✨ New Features
+### ✨ New Features (v1.1.0)
 - **Auto-detect from LinkedIn Profile** — Automatically extract name, headline, skills, and experience from your LinkedIn profile page
 - **Clear Buttons** — 8 dedicated clear buttons for quick field management
 - **Profile Enhancement** — AI-powered suggestions to improve your professional summary
 
-### 🔧 Improvements
+### 🔧 Improvements (v1.1.0)
 - **Accessibility Compliance** — All clear buttons now include:
   - `type="button"` attributes to prevent accidental form submission
   - Unique `aria-label` attributes for screen reader support
@@ -195,13 +272,9 @@ curl -X POST http://localhost:8000/analyze-job \
 - **Job Analysis** — Fixed response validation to properly match LLM output fields
 - **Simplified UI** — Removed floating AI buttons in favor of clean copy-paste workflow
 
-### 🐛 Bug Fixes
+### 🐛 Bug Fixes (v1.1.0)
 - Fixed PII exposure in backend logging and exception messages
 - Corrected job analysis response field mapping
 - Improved content extraction reliability with multiple selector fallbacks
-
----
-
-## �📜 License
 
 MIT — Use freely for personal and commercial projects.

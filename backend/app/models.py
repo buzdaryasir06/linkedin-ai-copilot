@@ -5,7 +5,7 @@ Defines the data contracts for both Comment Mode and Job Mode endpoints.
 All fields are validated automatically by FastAPI.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 
 
@@ -65,3 +65,115 @@ class UserProfileUpdate(BaseModel):
     skills: Optional[list[str]] = None
     experience: Optional[str] = None
     summary: Optional[str] = None
+
+
+# ─── Profile Enhancement Mode ────────────────────────────────────────────────
+
+class HeadlineOptimization(BaseModel):
+    """Optimized headline with detailed reasoning."""
+    current_headline: str = Field(..., description="Current headline from profile")
+    optimized_headline: str = Field(..., description="Rewritten, high-impact headline (max 120 chars)")
+    why_stronger: str = Field(..., description="Specific explanation of why it's more compelling")
+    keyword_suggestions: list[str] = Field(default_factory=list, description="Keywords to incorporate for SEO")
+    char_count: int = Field(0, description="Character count of optimized headline")
+
+
+class AboutSectionEnhancement(BaseModel):
+    """Enhanced About section with positioning and authority."""
+    current_about: str = Field(..., description="Current About section")
+    optimized_about: str = Field(..., description="Rewritten About section (3-4 paragraphs)")
+    positioning_statement: str = Field(..., description="Clear, one-sentence positioning statement")
+    authority_elements: list[str] = Field(default_factory=list, description="Authority signals included (credibility, depth, impact)")
+    structure_explanation: str = Field(..., description="Explanation of how structure follows hook → expertise → impact → vision")
+
+
+class ExperienceImprovement(BaseModel):
+    """Improved experience bullet point."""
+    original: str = Field(..., description="Original bullet point from experience")
+    improved: str = Field(..., description="Impact-driven rewrite with metrics where possible")
+    improvement_reason: str = Field(..., description="Why this is stronger (leadership, ownership, technical depth)")
+    metrics_added: Optional[str] = Field(None, description="Metrics or quantifiable results added")
+
+
+class ExperienceSectionImprovements(BaseModel):
+    """Complete experience section improvements."""
+    improvements: list[ExperienceImprovement] = Field(default_factory=list, description="Individual bullet point improvements")
+    missing_details: list[str] = Field(default_factory=list, description="Suggested missing details to add")
+    overall_feedback: str = Field(..., description="Overall feedback on impact and positioning in experience")
+
+
+class SkillsStrategy(BaseModel):
+    """Strategic recommendations for skills section."""
+    current_skills: list[str] = Field(default_factory=list, description="Skills currently on profile")
+    recommended_additions: list[str] = Field(default_factory=list, description="High-value skills to add (tailored to target role)")
+    suggested_ordering_strategy: str = Field(..., description="Strategy for ordering skills for maximum impact")
+    niche_positioning: list[str] = Field(default_factory=list, description="Niche/specialized skills that differentiate from competitors")
+    skills_to_deemphasize: list[str] = Field(default_factory=list, description="Generic skills that don't align with target role")
+
+
+class RecruiterOptimization(BaseModel):
+    """Keywords and positioning for recruiter discoverability."""
+    high_value_keywords: list[str] = Field(default_factory=list, description="Keywords recruiters search for (ATS-optimized)")
+    suggested_positioning: str = Field(..., description="How to position profile for optimal recruiter discovery")
+    search_terms_to_include: list[str] = Field(default_factory=list, description="Specific search terms and phrases to naturally incorporate")
+    visibility_recommendations: list[str] = Field(default_factory=list, description="Actions to improve recruiter visibility")
+
+
+class DifferentiationAnalysis(BaseModel):
+    """Analysis of what makes profile stand out."""
+    tone_consistency: str = Field(..., description="Analysis of tone consistency across profile")
+    differentiation_factors: list[str] = Field(default_factory=list, description="What makes this profile unique vs competitors")
+    authority_signals: list[str] = Field(default_factory=list, description="Authority signals currently present")
+    competitive_advantages: list[str] = Field(default_factory=list, description="Competitive advantages to emphasize")
+
+
+class ProfileEnhancementScore(BaseModel):
+    """Overall profile score and priorities."""
+    score_out_of_10: float = Field(0, ge=0, le=10, description="Overall profile score (0-10)")
+    score_breakdown: dict = Field(default_factory=dict, description="Breakdown by section (headline, about, experience, skills, etc.)")
+    top_3_priorities: list[str] = Field(default_factory=list, description="Top 3 improvement priorities, ranked by impact")
+    weeks_to_expert_profile: int = Field(4, description="Estimated weeks to transform profile to expert level")
+
+
+class ProfileEnhancementRequest(BaseModel):
+    """Request for comprehensive profile enhancement."""
+    current_headline: str = Field(..., min_length=5, max_length=220, description="Current LinkedIn headline")
+    about_section: str = Field(..., min_length=20, max_length=2600, description="Current About section text")
+    experience_descriptions: list[str] = Field(
+        default_factory=list, 
+        max_items=20,
+        description="List of experience bullet points or descriptions (max 20 items, 2000 chars each)"
+    )
+    current_skills: list[str] = Field(
+        default_factory=list, 
+        max_items=100,
+        description="Current skills listed on profile (max 100 items)"
+    )
+    featured_section: Optional[str] = Field(None, description="Featured section content (projects, articles, etc.)")
+    target_role: str = Field(..., min_length=5, max_length=220, description="Target role (e.g., 'Python Backend Developer', 'AI Engineer')")
+    years_of_experience: int = Field(..., ge=0, le=60, description="Total years of professional experience")
+    industry: Optional[str] = Field(None, max_length=1000, description="Current/target industry (e.g., 'FinTech', 'SaaS')")
+    company_experience: Optional[str] = Field(None, max_length=1000, description="Company types worked at (startups, FAANG, etc.)")
+    
+    @field_validator('experience_descriptions')
+    @classmethod
+    def validate_experience_descriptions(cls, v):
+        """Ensure each experience description is max 2000 characters."""
+        if not isinstance(v, list):
+            return v
+        for i, exp in enumerate(v):
+            if len(exp) > 2000:
+                raise ValueError(f"Experience description {i+1} exceeds 2000 character limit (got {len(exp)} chars)")
+        return v
+
+
+class ProfileEnhancementResponse(BaseModel):
+    """Comprehensive profile enhancement response."""
+    headline_optimization: HeadlineOptimization
+    about_section_enhancement: AboutSectionEnhancement
+    experience_improvements: ExperienceSectionImprovements
+    skills_strategy: SkillsStrategy
+    recruiter_optimization: RecruiterOptimization
+    differentiation_analysis: DifferentiationAnalysis
+    overall_score: ProfileEnhancementScore
+    executive_summary: str = Field(..., description="2-3 sentence summary of key opportunities and recommendations")

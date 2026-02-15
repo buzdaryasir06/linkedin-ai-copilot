@@ -6,6 +6,7 @@ and provides a health check endpoint.
 """
 
 import logging
+import re
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -13,8 +14,28 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
 from .database import init_db, get_user_profile, save_user_profile
-from .models import UserProfile, UserProfileUpdate
+from .models import UserProfile, UserProfileUpdate, ProfileEnhancementRequest, ProfileEnhancementResponse
 from .routers import comments, jobs
+
+
+# ─── Logging Security ──────────────────────────────────────────────────────
+
+def sanitize_log_input(value: str, max_len: int = 100) -> str:
+    """
+    Sanitize user input for safe logging, preventing log injection attacks.
+    
+    - Strips control/newline characters
+    - Escapes or removes unexpected characters
+    - Truncates to safe length
+    """
+    if not isinstance(value, str):
+        value = str(value)
+    # Remove control characters and newlines
+    sanitized = re.sub(r'[\x00-\x1f\x7f-\x9f\n\r\t]', '', value)
+    # Keep only printable ASCII and common Unicode letters/numbers
+    sanitized = re.sub(r'[^\w\s\-./:()]', '', sanitized, flags=re.UNICODE)
+    # Truncate to max length
+    return sanitized[:max_len]
 
 # ─── Logging ─────────────────────────────────────────────────────────────────
 
@@ -110,5 +131,39 @@ async def enhance_profile(data: dict):
         from fastapi import HTTPException
         raise HTTPException(status_code=400, detail="Not enough profile text to enhance.")
     return await enhance_profile_text(raw_text)
+
+
+@app.post("/enhance-profile-advanced", response_model=ProfileEnhancementResponse)
+async def enhance_profile_advanced(request: ProfileEnhancementRequest):
+    """
+    Comprehensive profile enhancement with structured, actionable suggestions.
+    
+    Analyzes:
+    - Headline with keyword optimization
+    - About section with positioning and authority
+    - Experience descriptions with impact-driven rewrites
+    - Skills section with niche positioning
+    - Overall profile score with ranked priorities
+    
+    Tailored to target role with focus on recruiter visibility and competitive differentiation.
+    """
+    from .services import enhance_profile as enhance_profile_service
+    
+    safe_target_role = sanitize_log_input(request.target_role)
+    logger.info(f"Profile enhancement requested for target role: {safe_target_role}")
+    
+    result = await enhance_profile_service(
+        current_headline=request.current_headline,
+        about_section=request.about_section,
+        experience_descriptions=request.experience_descriptions,
+        current_skills=request.current_skills,
+        target_role=request.target_role,
+        years_of_experience=request.years_of_experience,
+        featured_section=request.featured_section,
+        industry=request.industry,
+        company_experience=request.company_experience,
+    )
+    
+    return result
 
 
