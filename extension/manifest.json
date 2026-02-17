@@ -1,21 +1,30 @@
 {
     "manifest_version": 3,
-    "name": "LinkedIn AI Copilot",
-    "version": "1.0.0",
-    "description": "Personal AI-powered LinkedIn assistant – Generate smart comments and analyze job postings.",
+    "name": "LinkedIn AI Copilot v2",
+    "version": "2.0.0",
+    "description": "AI-powered LinkedIn job scanner & dashboard – Analyze jobs in batches, track applications, and get AI insights.",
+    
     "permissions": [
         "activeTab",
         "storage",
         "tabs",
-        "sidePanel"
+        "sidePanel",
+        "alarms",
+        "scripting"
     ],
+    
     "host_permissions": [
+        "https://www.linkedin.com/jobs/search/*",
+        "https://www.linkedin.com/jobs/view/*",
         "https://www.linkedin.com/*",
-        "http://localhost:8000/*"
+        "http://localhost:8000/*",
+        "http://localhost:3000/*"
     ],
+    
     "background": {
         "service_worker": "background.js"
     },
+    
     "content_scripts": [
         {
             "matches": [
@@ -25,23 +34,56 @@
                 "content.js"
             ],
             "css": [],
-            "run_at": "document_idle"
+            "run_at": "document_idle",
+            "all_frames": false
+        },
+        {
+            "matches": [
+                "https://www.linkedin.com/jobs/search/*",
+                "https://www.linkedin.com/jobs/view/*"
+            ],
+            "js": [
+                "scanner/job-scanner.js",
+                "scanner/job-page-detector.js",
+                "scanner/job-card-parser.js",
+                "scanner/badge-overlay.js"
+            ],
+            "run_at": "document_end",
+            "all_frames": false
         }
     ],
+    
     "action": {
         "default_title": "LinkedIn AI Copilot",
         "default_icon": {
             "16": "icons/icon16.png",
             "48": "icons/icon48.png",
             "128": "icons/icon128.png"
-        }
+        },
+        "default_popup": "popup.html"
     },
+    
     "side_panel": {
         "default_path": "popup.html"
     },
+    
     "icons": {
         "16": "icons/icon16.png",
         "48": "icons/icon48.png",
         "128": "icons/icon128.png"
-    }
+    },
+    
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "icons/badge-high.svg",
+                "icons/badge-medium.svg",
+                "icons/badge-low.svg",
+                "scanner/inject-badge.js"
+            ],
+            "matches": [
+                "https://www.linkedin.com/*"
+            ]
+        }
+    ]
 }

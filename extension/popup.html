@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=400, initial-scale=1.0" />
     <title>LinkedIn AI Copilot</title>
     <link rel="stylesheet" href="popup.css" />
+    <link rel="stylesheet" href="dashboard/dashboard-styles.css">
 </head>
 
 <body>
@@ -34,14 +35,23 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
-            Comment Mode
+            Comment
         </button>
         <button id="jobModeBtn" class="mode-btn" data-mode="job">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
                 <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
             </svg>
-            Job Mode
+            Job Match
+        </button>
+        <button id="dashboardModeBtn" class="mode-btn" data-mode="dashboard">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7" />
+                <rect x="14" y="3" width="7" height="7" />
+                <rect x="14" y="14" width="7" height="7" />
+                <rect x="3" y="14" width="7" height="7" />
+            </svg>
+            Dashboard
         </button>
     </div>
 
@@ -95,6 +105,13 @@
             <textarea id="jobText"
                 placeholder="Copy and paste the full job description here… The more detail, the better the analysis."
                 rows="4"></textarea>
+            <button id="autoDetectJobBtn" type="button" class="secondary-btn" style="margin-top: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="9" />
+                    <polyline points="12 7 12 12 16 14"></polyline>
+                </svg>
+                Auto-detect from LinkedIn Job Page
+            </button>
         </div>
         <div class="input-row">
             <div class="input-group flex-1">
@@ -132,6 +149,13 @@
 
         <div id="jobResultsContainer" class="results-container hidden">
             <!-- Job analysis results rendered by JS -->
+        </div>
+    </section>
+
+    <!-- ─── Dashboard Panel ────────────────────────────────────────────── -->
+    <section id="dashboardPanel" class="panel hidden" style="display: flex; flex-direction: column; max-height: 600px; overflow: hidden;">
+        <div id="dashboardContainer" style="flex: 1; overflow-y: auto;">
+            <!-- Dashboard UI rendered here -->
         </div>
     </section>
 
@@ -221,6 +245,12 @@
     </div>
 
     <script src="popup.js"></script>
+    <script src="storage/storage-adapter.js"></script>
+    <script src="storage/job-storage.js"></script>
+    <script src="utils/validators.js"></script>
+    <script src="dashboard/dashboard-ui.js"></script>
+    <script src="dashboard/dashboard.js"></script>
+
 </body>
 
 </html>

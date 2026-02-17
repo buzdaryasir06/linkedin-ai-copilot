@@ -1,0 +1,523 @@
+/* Dashboard Styling */
+
+.dashboard-app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────── */
+
+.dashboard-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.dashboard-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #000;
+}
+
+.dashboard-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #666;
+}
+
+.meta-stat {
+  background: #f5f5f5;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* ─── Controls ────────────────────────────────────────────────────── */
+
+.dashboard-controls {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.controls-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.control-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #333;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.control-input {
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.control-input:hover {
+  border-color: #0a66c2;
+}
+
+.control-input:focus {
+  outline: none;
+  border-color: #0a66c2;
+  box-shadow: 0 0 3px rgba(10, 102, 194, 0.2);
+}
+
+.filter-select {
+  min-width: 100px;
+  flex: 0 1 auto;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 140px;
+}
+
+.control-btn {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #f5f5f5;
+  color: #333;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.control-btn:hover {
+  background: #efefef;
+  border-color: #999;
+}
+
+.control-btn:active {
+  background: #e8e8e8;
+}
+
+.reset-btn {
+  white-space: nowrap;
+}
+
+/* ─── Table Container ────────────────────────────────────────────── */
+
+.table-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.table-container.hidden {
+  display: none;
+}
+
+.jobs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.jobs-table thead {
+  position: sticky;
+  top: 0;
+  background: #f9f9f9;
+  border-bottom: 2px solid #e0e0e0;
+  z-index: 10;
+}
+
+.jobs-table th {
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.jobs-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+}
+
+.jobs-table tbody tr {
+  transition: background-color 0.15s;
+}
+
+.jobs-table tbody tr:hover {
+  background: #f9f9f9;
+}
+
+/* Column widths */
+.col-company {
+  width: 22%;
+  min-width: 100px;
+}
+
+.col-role {
+  width: 24%;
+  min-width: 110px;
+}
+
+.col-match {
+  width: 12%;
+  min-width: 60px;
+}
+
+.col-status {
+  width: 14%;
+  min-width: 85px;
+}
+
+.col-date {
+  width: 14%;
+  min-width: 80px;
+}
+
+.col-notes {
+  width: 20%;
+  min-width: 100px;
+}
+
+.col-actions {
+  width: 10%;
+  min-width: 40px;
+  text-align: center;
+}
+
+/* ─── Cell Content Styling ──────────────────────────────────────── */
+
+/* Company & Role cells */
+.cell-company {
+  font-weight: 500;
+  color: #000;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell-role {
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Match Badge */
+.match-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 11px;
+  text-align: center;
+}
+
+.match-badge.high {
+  background: #d4f4dd;
+  color: #0d6e3c;
+}
+
+.match-badge.medium {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.match-badge.low {
+  background: #fee2e2;
+  color: #7f1d1d;
+}
+
+/* Status Dropdown */
+.status-select {
+  padding: 4px 6px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.status-select:hover {
+  border-color: #0a66c2;
+}
+
+.status-select:focus {
+  outline: none;
+  border-color: #0a66c2;
+  box-shadow: 0 0 3px rgba(10, 102, 194, 0.2);
+}
+
+/* Status colors */
+.status-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.status-badge.new {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.status-badge.saved {
+  background: #d0e0fc;
+  color: #1e40af;
+}
+
+.status-badge.applied {
+  background: #d4f4dd;
+  color: #0d6e3c;
+}
+
+.status-badge.rejected {
+  background: #fee2e2;
+  color: #7f1d1d;
+}
+
+/* Date cell */
+.cell-date {
+  color: #666;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* Notes cell */
+.cell-notes {
+  position: relative;
+}
+
+.notes-display {
+  max-height: 40px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  color: #666;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 2px;
+  transition: background 0.2s;
+  min-height: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.notes-display:hover {
+  background: #fffbea;
+}
+
+.notes-display.empty {
+  color: #999;
+  font-style: italic;
+}
+
+.notes-input {
+  width: calc(100% - 4px);
+  padding: 4px 2px;
+  border: 1px solid #0a66c2;
+  border-radius: 2px;
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.notes-input:focus {
+  outline: none;
+}
+
+.notes-saving {
+  opacity: 0.6;
+}
+
+/* Action buttons */
+.action-btn {
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #333;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  border-color: #e74c3c;
+  background: #fee2e2;
+  color: #e74c3c;
+}
+
+.action-btn:active {
+  background: #fecaca;
+}
+
+/* ─── Empty State ────────────────────────────────────────────────── */
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: #999;
+}
+
+.empty-state.hidden {
+  display: none;
+}
+
+.empty-icon {
+  opacity: 0.3;
+  margin-bottom: 12px;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 12px;
+  color: #999;
+  line-height: 1.4;
+}
+
+/* ─── Loading State ──────────────────────────────────────────────── */
+
+.loading-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #666;
+}
+
+.loading-state.hidden {
+  display: none;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #e0e0e0;
+  border-top-color: #0a66c2;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Scrollbar Styling ──────────────────────────────────────────– */
+
+.table-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 3px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #bbb;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .controls-group {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .control-input,
+  .control-btn {
+    width: 100%;
+  }
+
+  .col-company {
+    width: 20%;
+    min-width: 80px;
+  }
+
+  .col-role {
+    width: 22%;
+    min-width: 80px;
+  }
+
+  .col-match {
+    width: 12%;
+    min-width: 50px;
+  }
+
+  .col-status {
+    width: 12%;
+    min-width: 70px;
+  }
+
+  .col-date {
+    width: 14%;
+    min-width: 60px;
+  }
+
+  .col-notes {
+    display: none;
+  }
+
+  .col-actions {
+    width: 8%;
+    min-width: 30px;
+  }
+
+  .jobs-table th,
+  .jobs-table td {
+    padding: 6px 6px;
+    font-size: 11px;
+  }
+
+  .cell-company,
+  .cell-role {
+    font-size: 11px;
+  }
+}

@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import get_settings
 from .database import init_db, get_user_profile, save_user_profile
 from .models import UserProfile, UserProfileUpdate, ProfileEnhancementRequest, ProfileEnhancementResponse
-from .routers import comments, jobs
+from .routers import comments, jobs, batch_scoring
 
 
 # ─── Logging Security ──────────────────────────────────────────────────────
@@ -62,8 +62,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="LinkedIn AI Copilot",
-    description="Personal AI-powered LinkedIn assistant – Comment & Job analysis modes.",
-    version="1.0.0",
+    description="Personal AI-powered LinkedIn assistant – Comment, Job analysis, & Dashboard tracking.",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
@@ -82,7 +82,7 @@ app.add_middleware(
 
 app.include_router(comments.router)
 app.include_router(jobs.router)
-
+app.include_router(batch_scoring.router)
 
 # ─── Utility Endpoints ──────────────────────────────────────────────────────
 

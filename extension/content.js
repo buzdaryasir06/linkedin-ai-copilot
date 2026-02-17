@@ -15,7 +15,7 @@
   // ─── Message Listener ──────────────────────────────────────────
 
   /**
-   * Listen for messages from popup requesting profile extraction.
+   * Listen for messages from popup requesting profile/job extraction.
    */
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "EXTRACT_PROFILE") {
@@ -70,6 +70,69 @@
       } catch (err) {
         console.error("[LinkedIn AI Copilot] Error extracting profile:", err);
         sendResponse({ success: false, error: "Error extracting profile: " + err.message });
+      }
+    } else if (message.action === "EXTRACT_JOB") {
+      // Extract job description from the current LinkedIn job page
+      try {
+        const jobData = {};
+
+        // Job title - prefer title-specific elements first
+        const titleEl = document.querySelector("h1") ||
+          document.querySelector(".jobs-details-top-card__job-title") ||
+          document.querySelector(".show-more-less-html__markup span");
+        jobData.job_title = titleEl ? titleEl.innerText.trim() : "";
+
+        // Company name
+        const companyEl = document.querySelector(".org-top-card-summary__org-name") ||
+          document.querySelector("[data-test-id='job-details-header-company-name']") ||
+          document.querySelector(".show-more-less-html h2");
+        jobData.company_name = companyEl ? companyEl.innerText.trim() : "";
+
+        // Location - prefer full innerText from dedicated location element
+        const locationEl = document.querySelector("[data-test-id='job-details-location']");
+        if (locationEl) {
+          jobData.location = locationEl.innerText.trim();
+        } else {
+          // Fallback: extract with flexible regex for multi-word regions
+          const fallbackEl = document.querySelector(".show-more-less-html__markup");
+          if (fallbackEl) {
+            const text = fallbackEl.innerText;
+            const match = text.match(/[A-Za-z\s\u00C0-\u024F-]+,\s*[A-Za-z\s\u00C0-\u024F]+/);
+            jobData.location = match ? match[0] : "";
+          } else {
+            jobData.location = "";
+          }
+        }
+
+        // Job description - Test multiple selectors in order
+        let description = "";
+        const selectors = [
+          ".show-more-less-html__markup",
+          "[data-test-id='job-details-full-description']",
+          ".jobs-details__main-content",
+          ".show-more-less-element__text"
+        ];
+        
+        for (let selector of selectors) {
+          const elem = document.querySelector(selector);
+          if (elem) {
+            const text = elem.innerText || elem.textContent;
+            if (text && text.length > 100) {
+              description = text;
+              break;
+            }
+          }
+        }
+        jobData.description = description.substring(0, 5000); // Limit to 5000 chars
+
+        // Job URL
+        jobData.job_url = window.location.href;
+
+        console.log("[LinkedIn AI Copilot] Job description extracted successfully");
+        sendResponse({ success: true, data: jobData });
+      } catch (err) {
+        console.error("[LinkedIn AI Copilot] Error extracting job:", err);
+        sendResponse({ success: false, error: "Error extracting job: " + err.message });
       }
     }
 

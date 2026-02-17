@@ -1,0 +1,85 @@
+<!-- Job Tracking Dashboard -->
+<div id="dashboardApp" class="dashboard-app">
+  
+  <!-- Header -->
+  <div class="dashboard-header">
+    <h2 class="dashboard-title">📊 Job Tracker</h2>
+    <div class="dashboard-meta">
+      <span id="jobCount" class="meta-stat">0 jobs</span>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="dashboard-controls">
+    <!-- Filters -->
+    <div class="controls-group">
+      <label for="filterStatus" class="control-label">Status:</label>
+      <select id="filterStatus" class="control-input filter-select">
+        <option value="">All Statuses</option>
+        <option value="New">New</option>
+        <option value="Saved">Saved</option>
+        <option value="Applied">Applied</option>
+        <option value="Rejected">Rejected</option>
+      </select>
+
+      <label for="filterMatch" class="control-label">Min Match:</label>
+      <select id="filterMatch" class="control-input filter-select">
+        <option value="">Any %</option>
+        <option value="80">80%+</option>
+        <option value="60">60%+</option>
+        <option value="40">40%+</option>
+      </select>
+
+      <button id="resetFiltersBtn" class="control-btn reset-btn">Reset</button>
+    </div>
+
+    <!-- Search -->
+    <div class="controls-group">
+      <input 
+        id="searchBox" 
+        type="text" 
+        class="control-input search-input" 
+        placeholder="Search company or role..."
+        autocomplete="off"
+      >
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div id="emptyState" class="empty-state">
+    <svg class="empty-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <rect x="3" y="3" width="7" height="7" />
+      <rect x="14" y="3" width="7" height="7" />
+      <rect x="14" y="14" width="7" height="7" />
+      <rect x="3" y="14" width="7" height="7" />
+    </svg>
+    <h3>No jobs tracked yet</h3>
+    <p>Analyze jobs using Job Match tab to start building your dashboard.</p>
+  </div>
+
+  <!-- Table -->
+  <div id="tableContainer" class="table-container hidden">
+    <table class="jobs-table">
+      <thead>
+        <tr>
+          <th class="col-company">Company</th>
+          <th class="col-role">Role</th>
+          <th class="col-match">Match</th>
+          <th class="col-status">Status</th>
+          <th class="col-date">Date</th>
+          <th class="col-notes">Notes</th>
+          <th class="col-actions">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="jobsTableBody">
+        <!-- Rows rendered by JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Loading State -->
+  <div id="loadingState" class="loading-state hidden">
+    <div class="spinner"></div>
+    <p>Loading jobs...</p>
+  </div>
+</div>

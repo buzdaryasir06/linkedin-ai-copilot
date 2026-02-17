@@ -272,3 +272,54 @@ RESPOND WITH ONLY VALID JSON - NO EXPLANATIONS OUTSIDE JSON:
         {"role": "system", "content": system_msg},
         {"role": "user", "content": user_msg},
     ]
+
+
+def build_job_batch_scoring_prompt(job: dict, user_profile: dict) -> list[dict]:
+    """
+    Build prompt for batch job scoring (fast, lightweight scoring for overlays).
+
+    Returns match_percentage, ranking_level, matched_skills, missing_skills, summary.
+    Used for real-time feedback on LinkedIn job search results.
+    """
+    job_title = job.get("job_title", "")
+    company = job.get("company_name", "")
+    location = job.get("location", "")
+    description = job.get("description", "")[:1500]  # Limit to 1500 chars for speed
+    
+    user_skills = ", ".join(user_profile.get("skills", []))
+    target_role = user_profile.get("target_role", "")
+    experience = user_profile.get("experience", "")
+    
+    system_msg = (
+        "You are a job match scoring expert. "
+        "Quickly analyze how well a job matches a candidate's profile. "
+        "Return ONLY valid JSON with no markdown, no explanations. "
+        "Be fast and practical — this is for real-time UI feedback on job search pages."
+    )
+    
+    user_msg = f"""Analyze this job opening and score how well it matches the candidate:
+
+CANDIDATE PROFILE:
+- Skills: {user_skills}
+- Experience: {experience}
+- Target Role: {target_role}
+
+JOB OPENING:
+- Title: {job_title}
+- Company: {company}
+- Location: {location}
+- Description: {description}
+
+Return ONLY this JSON (no markdown, no extra text):
+{{
+  "match_percentage": <0-100 integer>,
+  "ranking_level": "<'high' if 70+, 'medium' if 50-70, 'low' if <50>",
+  "matched_skills": [<top 3 skills from candidate that appear in job>],
+  "missing_skills": [<top 3 skills candidate lacks for this role>],
+  "summary": "<1 sentence reason for the score>"
+}}"""
+    
+    return [
+        {"role": "system", "content": system_msg},
+        {"role": "user", "content": user_msg},
+    ]

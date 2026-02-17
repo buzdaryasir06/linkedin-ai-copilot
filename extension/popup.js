@@ -16,11 +16,14 @@
 
     const commentModeBtn = document.getElementById("commentModeBtn");
     const jobModeBtn = document.getElementById("jobModeBtn");
+    const dashboardModeBtn = document.getElementById("dashboardModeBtn");
     const settingsBtn = document.getElementById("settingsBtn");
     const backBtn = document.getElementById("backBtn");
 
     const commentPanel = document.getElementById("commentPanel");
     const jobPanel = document.getElementById("jobPanel");
+    const dashboardPanel = document.getElementById("dashboardPanel");
+    const dashboardContainer = document.getElementById("dashboardContainer");
     const settingsPanel = document.getElementById("settingsPanel");
 
     const postTextInput = document.getElementById("postText");
@@ -129,11 +132,50 @@
         // Update toggle buttons
         commentModeBtn.classList.toggle("active", mode === "comment");
         jobModeBtn.classList.toggle("active", mode === "job");
+        dashboardModeBtn.classList.toggle("active", mode === "dashboard");
 
         // Show/hide panels
         commentPanel.classList.toggle("hidden", mode !== "comment");
         jobPanel.classList.toggle("hidden", mode !== "job");
+        dashboardPanel.classList.toggle("hidden", mode !== "dashboard");
         settingsPanel.classList.toggle("hidden", mode !== "settings");
+
+        // If switching to dashboard, initialize it
+        if (mode === "dashboard") {
+            initializeDashboard();
+        }
+    }
+
+    // ─── Dashboard Initialization ────────────────────────────────────────
+
+    /**
+     * Initialize dashboard on first view.
+     */
+    async function initializeDashboard() {
+        if (!dashboardContainer) return;
+        
+        // Check if already meaningfully initialized (not just loading placeholder)
+        const currentContent = dashboardContainer.innerHTML.trim();
+        if (currentContent && !currentContent.includes("Dashboard scripts loading")) {
+            return; // Already initialized
+        }
+
+        // Check if all required scripts are loaded
+        if (typeof StorageAdapter !== 'undefined' && 
+            typeof DashboardUI !== 'undefined' && 
+            typeof JobStorage !== 'undefined') {
+            try {
+                const adapter = new StorageAdapter();
+                const jobStorage = new JobStorage(adapter);
+                const ui = new DashboardUI(dashboardContainer, adapter, jobStorage);
+                await ui.initialize();
+            } catch (error) {
+                console.error('[Popup] Dashboard initialization error:', error);
+                dashboardContainer.innerHTML = '<p style="padding: 20px; text-align: center; color: #e74c3c;">⚠ Dashboard failed to load</p>';
+            }
+        } else {
+            dashboardContainer.innerHTML = '<p style="padding: 20px; text-align: center; color: #999;">Dashboard scripts loading...</p>';
+        }
     }
 
     // ─── Comment Generation ────────────────────────────────────────────────
@@ -563,6 +605,7 @@
 
     commentModeBtn.addEventListener("click", () => switchMode("comment"));
     jobModeBtn.addEventListener("click", () => switchMode("job"));
+    dashboardModeBtn.addEventListener("click", () => switchMode("dashboard"));
     settingsBtn.addEventListener("click", () => switchMode("settings"));
     backBtn.addEventListener("click", () => switchMode(currentMode === "settings" ? "comment" : currentMode));
 
@@ -638,6 +681,45 @@
                         showToast("Profile auto-detected! Review & save.");
                     }
                 );
+            });
+        });
+    });
+
+    // Auto-detect job description from LinkedIn job page
+    const autoDetectJobBtn = document.getElementById("autoDetectJobBtn");
+
+    autoDetectJobBtn?.addEventListener("click", () => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (!tabs[0]) {
+                showToast("No active tab found.");
+                return;
+            }
+
+            showToast("🔍 Extracting job details from LinkedIn...");
+            autoDetectJobBtn.disabled = true;
+
+            chrome.tabs.sendMessage(tabs[0].id, { action: "EXTRACT_JOB" }, (response) => {
+                autoDetectJobBtn.disabled = false;
+
+                if (chrome.runtime.lastError) {
+                    showToast("❌ Could not connect. Please refresh your LinkedIn job page and try again.");
+                    return;
+                }
+
+                if (!response?.success) {
+                    showToast("❌ " + (response?.error || "Could not extract job details. Make sure you're on a LinkedIn job page."));
+                    return;
+                }
+
+                const jobData = response.data;
+                
+                // Fill in the job text field with extracted description
+                if (jobData.description) {
+                    jobTextInput.value = jobData.description;
+                    showToast("✅ Job description auto-detected! Review and analyze.");
+                } else {
+                    showToast("⚠ Could not extract job description. Please copy and paste it manually.");
+                }
             });
         });
     });
