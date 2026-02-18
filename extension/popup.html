@@ -65,14 +65,16 @@
         <div class="input-group">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <label for="postText">LinkedIn Post Text</label>
-                <button type="button" class="clear-btn" data-target="postText" title="Clear LinkedIn Post Text" aria-label="Clear LinkedIn Post Text">
+                <button type="button" class="clear-btn" data-target="postText" title="Clear LinkedIn Post Text"
+                    aria-label="Clear LinkedIn Post Text">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6"></path>
+                        <path
+                            d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6">
+                        </path>
                     </svg>
                 </button>
             </div>
-            <textarea id="postText" placeholder="Paste a LinkedIn post here …"
-                rows="3"></textarea>
+            <textarea id="postText" placeholder="Paste a LinkedIn post here …" rows="3"></textarea>
         </div>
         <button id="generateBtn" class="primary-btn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -96,9 +98,12 @@
         <div class="input-group">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <label for="jobText">Job Description <small>(paste from LinkedIn job post)</small></label>
-                <button type="button" class="clear-btn" data-target="jobText" title="Clear Job Description" aria-label="Clear Job Description">
+                <button type="button" class="clear-btn" data-target="jobText" title="Clear Job Description"
+                    aria-label="Clear Job Description">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6"></path>
+                        <path
+                            d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6">
+                        </path>
                     </svg>
                 </button>
             </div>
@@ -117,9 +122,13 @@
             <div class="input-group flex-1">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <label for="userSkills">Your Skills <small>(comma-separated)</small></label>
-                    <button type="button" class="clear-btn" data-target="userSkills" title="Clear Your Skills" aria-label="Clear Your Skills">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6"></path>
+                    <button type="button" class="clear-btn" data-target="userSkills" title="Clear Your Skills"
+                        aria-label="Clear Your Skills">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6">
+                            </path>
                         </svg>
                     </button>
                 </div>
@@ -129,9 +138,12 @@
         <div class="input-group">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <label for="userExperience">Your Experience <small>(brief summary)</small></label>
-                <button type="button" class="clear-btn" data-target="userExperience" title="Clear Your Experience" aria-label="Clear Your Experience">
+                <button type="button" class="clear-btn" data-target="userExperience" title="Clear Your Experience"
+                    aria-label="Clear Your Experience">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6"></path>
+                        <path
+                            d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6">
+                        </path>
                     </svg>
                 </button>
             </div>
@@ -153,7 +165,8 @@
     </section>
 
     <!-- ─── Dashboard Panel ────────────────────────────────────────────── -->
-    <section id="dashboardPanel" class="panel hidden" style="display: flex; flex-direction: column; max-height: 600px; overflow: hidden;">
+    <section id="dashboardPanel" class="panel hidden"
+        style="display: flex; flex-direction: column; max-height: 600px; overflow: hidden;">
         <div id="dashboardContainer" style="flex: 1; overflow-y: auto;">
             <!-- Dashboard UI rendered here -->
         </div>
@@ -166,9 +179,12 @@
         <div class="input-group">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <label for="profileName">Full Name</label>
-                <button type="button" class="clear-btn" data-target="profileName" title="Clear Full Name" aria-label="Clear Full Name">
+                <button type="button" class="clear-btn" data-target="profileName" title="Clear Full Name"
+                    aria-label="Clear Full Name">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6"></path>
+                        <path
+                            d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6">
+                        </path>
                     </svg>
                 </button>
             </div>
@@ -177,9 +193,12 @@
         <div class="input-group">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <label for="profileSkills">Skills <small>(comma-separated)</small></label>
-                <button type="button" class="clear-btn" data-target="profileSkills" title="Clear Profile Skills" aria-label="Clear Profile Skills">
+                <button type="button" class="clear-btn" data-target="profileSkills" title="Clear Profile Skills"
+                    aria-label="Clear Profile Skills">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6"></path>
+                        <path
+                            d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6">
+                        </path>
                     </svg>
                 </button>
             </div>
@@ -188,9 +207,12 @@
         <div class="input-group">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <label for="profileExperience">Experience Summary</label>
-                <button type="button" class="clear-btn" data-target="profileExperience" title="Clear Experience Summary" aria-label="Clear Experience Summary">
+                <button type="button" class="clear-btn" data-target="profileExperience" title="Clear Experience Summary"
+                    aria-label="Clear Experience Summary">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6"></path>
+                        <path
+                            d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6">
+                        </path>
                     </svg>
                 </button>
             </div>
@@ -199,9 +221,12 @@
         <div class="input-group">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <label for="profileSummary">Professional Summary</label>
-                <button type="button" class="clear-btn" data-target="profileSummary" title="Clear Professional Summary" aria-label="Clear Professional Summary">
+                <button type="button" class="clear-btn" data-target="profileSummary" title="Clear Professional Summary"
+                    aria-label="Clear Professional Summary">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6"></path>
+                        <path
+                            d="M19 6H5v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6zm-2-1h-3V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v2H7M9 11v6m4-6v6">
+                        </path>
                     </svg>
                 </button>
             </div>
@@ -244,12 +269,11 @@
         <p>AI is thinking…</p>
     </div>
 
-    <script src="popup.js"></script>
     <script src="storage/storage-adapter.js"></script>
     <script src="storage/job-storage.js"></script>
     <script src="utils/validators.js"></script>
     <script src="dashboard/dashboard-ui.js"></script>
-    <script src="dashboard/dashboard.js"></script>
+    <script src="popup.js"></script>
 
 </body>
 

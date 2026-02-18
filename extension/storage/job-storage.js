@@ -25,7 +25,7 @@ class JobStorage {
    */
   async getHighInterestJobs(minMatch = 70) {
     return this.adapter.queryJobs({
-      filters: { 
+      filters: {
         minMatchPercentage: minMatch,
         status: ['new', 'saved'],
       },
@@ -57,7 +57,7 @@ class JobStorage {
     pastDate.setDate(pastDate.getDate() - days);
 
     const allJobs = await this.adapter.queryJobs({ pageSize: 1000 });
-    const recent = allJobs.jobs.filter(job => 
+    const recent = allJobs.jobs.filter(job =>
       new Date(job.created_at) >= pastDate
     );
 
@@ -117,7 +117,7 @@ class JobStorage {
   async getJobsRequiringSkill(skill) {
     // This is a post-fetch filter since stored jobs don't have indexed skills
     const allJobs = await this.adapter.queryJobs({ pageSize: 1000 });
-    
+
     const filtered = allJobs.jobs.filter(job =>
       (job.missing_skills && job.missing_skills.includes(skill)) ||
       (job.description && job.description.toLowerCase().includes(skill.toLowerCase()))
@@ -142,7 +142,7 @@ class JobStorage {
 
     const avgSalaries = withSalary.map(j => (j.salary_min + j.salary_max) / 2);
     const sorted = avgSalaries.sort((a, b) => a - b);
-    
+
     // Calculate median correctly for even/odd length arrays
     let median;
     if (sorted.length % 2 === 0) {
@@ -167,7 +167,7 @@ class JobStorage {
    */
   async getSkillGaps(limit = 10) {
     const all = await this.adapter.queryJobs({ pageSize: 1000 });
-    
+
     const skillCounts = {};
     for (const job of all.jobs) {
       if (job.missing_skills && Array.isArray(job.missing_skills)) {
@@ -188,7 +188,7 @@ class JobStorage {
    */
   async getMatchedSkillsFrequency(limit = 15) {
     const all = await this.adapter.queryJobs({ pageSize: 1000 });
-    
+
     const skillCounts = {};
     for (const job of all.jobs) {
       if (job.matched_skills && Array.isArray(job.matched_skills)) {
@@ -209,7 +209,7 @@ class JobStorage {
    */
   async getJobsByMatchRange(minMatch, maxMatch) {
     return this.adapter.queryJobs({
-      filters: { 
+      filters: {
         minMatchPercentage: minMatch,
         // Note: maxMatch would need custom filter
       },
@@ -241,7 +241,7 @@ class JobStorage {
     const promises = jobIds.map(id =>
       this.adapter.updateJob(id, { status: newStatus })
     );
-    
+
     return Promise.allSettled(promises);
   }
 
@@ -250,7 +250,7 @@ class JobStorage {
    */
   async exportToCSV() {
     const all = await this.adapter.queryJobs({ pageSize: 10000 });
-    
+
     const headers = [
       'Job Title',
       'Company',
@@ -280,7 +280,7 @@ class JobStorage {
     ]);
 
     let csv = headers.join(',') + '\n';
-    csv += rows.map(row => 
+    csv += rows.map(row =>
       row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
     ).join('\n');
 
@@ -317,11 +317,11 @@ class JobStorage {
    */
   async isDuplicateJob(jobId, jobTitle, company) {
     const all = await this.adapter.queryJobs({ pageSize: 10000 });
-    
+
     return all.jobs.some(job =>
       job.job_id === jobId ||
       ((job.job_title || '').toLowerCase() === (jobTitle || '').toLowerCase() &&
-       (job.company_name || '').toLowerCase() === (company || '').toLowerCase())
+        (job.company_name || '').toLowerCase() === (company || '').toLowerCase())
     );
   }
 
@@ -340,14 +340,14 @@ class JobStorage {
     };
 
     // Calculate conversion rates as numbers (not strings)
-    funnel.conversion_rate_viewed_to_saved = funnel.total_viewed > 0 
+    funnel.conversion_rate_viewed_to_saved = funnel.total_viewed > 0
       ? Number((funnel.total_saved / funnel.total_viewed * 100).toFixed(2))
       : 0;
-    
-    funnel.conversion_rate_saved_to_applied = funnel.total_saved > 0 
+
+    funnel.conversion_rate_saved_to_applied = funnel.total_saved > 0
       ? Number((funnel.total_applied / funnel.total_saved * 100).toFixed(2))
       : 0;
-    
+
     funnel.conversion_rate_applied_to_interview = funnel.total_applied > 0
       ? Number((funnel.total_interviewed / funnel.total_applied * 100).toFixed(2))
       : 0;
@@ -356,5 +356,6 @@ class JobStorage {
   }
 }
 
-// Export helper
+// Export helper and singleton
 const createJobStorage = (adapter) => new JobStorage(adapter);
+const jobStorage = new JobStorage(storageAdapter);

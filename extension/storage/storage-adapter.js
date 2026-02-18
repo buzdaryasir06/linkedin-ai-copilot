@@ -16,17 +16,23 @@ class StorageAdapter {
     this.apiUrl = options.apiUrl || 'http://localhost:8000';
     this.cacheEnabled = options.cacheEnabled !== false;
     this.cacheTTL = options.cacheTTL || 300000; // 5 minutes
-    
+
     // In-memory cache for performance
     this.cache = new Map();
     this.cacheTimestamps = new Map();
-    
+    this.cacheTTLs = new Map();
+
+    // Initialization sync
+    this.ready = new Promise(resolve => {
+      this._resolveReady = resolve;
+    });
+
     // Request queuing for batch operations
     this.requestQueue = [];
     this.isProcessingQueue = false;
     this.queueDebounceMs = 500;
     this.queueTimer = null;
-    
+
     this.logger = options.logger || console;
   }
 
@@ -36,7 +42,7 @@ class StorageAdapter {
   async initialize() {
     try {
       this.logger.log('[StorageAdapter] Initializing with backend:', this.backend);
-      
+
       if (this.backend === 'api') {
         // Check if backend is reachable
         const isHealthy = await this._checkBackendHealth();
@@ -45,7 +51,7 @@ class StorageAdapter {
           this.backend = 'local';
         }
       }
-      
+
       // Load sync metadata
       const metadata = await this._getMetadata();
       this.syncEnabled = metadata?.sync_enabled || false;
@@ -53,6 +59,8 @@ class StorageAdapter {
       this.logger.error('[StorageAdapter] Init error:', error);
       // Gracefully downgrade to local
       this.backend = 'local';
+    } finally {
+      this._resolveReady();
     }
   }
 
@@ -66,17 +74,22 @@ class StorageAdapter {
    * @returns {Promise<Object>} Saved job
    */
   async saveJob(job) {
+    await this.ready;
     try {
       const validated = this._validateJob(job);
       const withTimestamps = this._addTimestamps(validated);
       const jobId = validated?.id || this._generateUUID();
       const withId = { id: jobId, ...withTimestamps };
 
-      if (this.backend === 'local') {
-        return await this._saveJobLocal(withId);
-      } else if (this.backend === 'api') {
-        return await this._saveJobWithDualWrite(withId);
-      }
+      const saved = this.backend === 'local'
+        ? await this._saveJobLocal(withId)
+        : await this._saveJobWithDualWrite(withId);
+
+      // Invalidate cache
+      this._invalidateCache('stats');
+      this._invalidateCache('query_*');
+
+      return saved;
     } catch (error) {
       this.logger.error('[StorageAdapter] Save job error:', error);
       throw error;
@@ -89,6 +102,7 @@ class StorageAdapter {
    * @returns {Promise<Object|null>}
    */
   async getJob(jobId) {
+    await this.ready;
     try {
       // Check cache first
       if (this._isCached(`job_${jobId}`)) {
@@ -118,9 +132,10 @@ class StorageAdapter {
    * @returns {Promise<{jobs: Array, total: number, page: number}>}
    */
   async queryJobs(options = {}) {
+    await this.ready;
     try {
       const cacheKey = `query_${JSON.stringify(options)}`;
-      
+
       if (this._isCached(cacheKey)) {
         return this._getFromCache(cacheKey);
       }
@@ -149,6 +164,7 @@ class StorageAdapter {
    * @returns {Promise<Object>} Updated job
    */
   async updateJob(jobId, updates) {
+    await this.ready;
     try {
       const currentJob = await this.getJob(jobId);
       if (!currentJob) {
@@ -186,6 +202,7 @@ class StorageAdapter {
    * @returns {Promise<boolean>}
    */
   async deleteJob(jobId) {
+    await this.ready;
     try {
       if (this.backend === 'local') {
         await this._deleteJobLocal(jobId);
@@ -210,15 +227,20 @@ class StorageAdapter {
    * @returns {Promise<Array>} Saved jobs
    */
   async saveJobsInBatch(jobs) {
+    await this.ready;
     try {
       const validated = jobs.map(j => this._validateJob(j));
       const withTimestamps = validated.map(j => this._addTimestamps(j));
 
-      if (this.backend === 'local') {
-        return await this._saveJobsBatchLocal(withTimestamps);
-      } else if (this.backend === 'api') {
-        return await this._saveJobsBatchApi(withTimestamps);
-      }
+      const saved = this.backend === 'local'
+        ? await this._saveJobsBatchLocal(withTimestamps)
+        : await this._saveJobsBatchWithDualWrite(withTimestamps);
+
+      // Invalidate cache
+      this._invalidateCache('stats');
+      this._invalidateCache('query_*');
+
+      return saved;
     } catch (error) {
       this.logger.error('[StorageAdapter] Batch save error:', error);
       throw error;
@@ -230,6 +252,7 @@ class StorageAdapter {
    * @returns {Promise<Object>}
    */
   async getDashboardStats() {
+    await this.ready;
     try {
       if (this._isCached('stats')) {
         return this._getFromCache('stats');
@@ -260,7 +283,7 @@ class StorageAdapter {
     return new Promise((resolve, reject) => {
       chrome.storage.local.get(['tracked_jobs'], (result) => {
         const jobs = result.tracked_jobs || [];
-        
+
         // Check if job already exists
         const existingIdx = jobs.findIndex(j => j.id === job.id);
         if (existingIdx >= 0) {
@@ -330,7 +353,7 @@ class StorageAdapter {
       chrome.storage.local.get(['tracked_jobs'], (result) => {
         const jobs = result.tracked_jobs || [];
         const idx = jobs.findIndex(j => j.id === jobId);
-        
+
         if (idx < 0) {
           reject(new Error(`Job not found: ${jobId}`));
           return;
@@ -353,7 +376,7 @@ class StorageAdapter {
       chrome.storage.local.get(['tracked_jobs'], (result) => {
         let jobs = result.tracked_jobs || [];
         jobs = jobs.filter(j => j.id !== jobId);
-        
+
         chrome.storage.local.set({ tracked_jobs: jobs }, () => {
           if (chrome.runtime.lastError) {
             reject(chrome.runtime.lastError);
@@ -369,7 +392,7 @@ class StorageAdapter {
     return new Promise((resolve, reject) => {
       chrome.storage.local.get(['tracked_jobs'], (result) => {
         let stored = result.tracked_jobs || [];
-        
+
         // Merge new jobs with existing
         const jobMap = new Map(stored.map(j => [j.id, j]));
         for (const job of jobs) {
@@ -392,7 +415,7 @@ class StorageAdapter {
     return new Promise((resolve) => {
       chrome.storage.local.get(['tracked_jobs'], (result) => {
         const jobs = result.tracked_jobs || [];
-        
+
         const stats = {
           total_jobs: jobs.length,
           avg_match_percentage: 0,
@@ -412,14 +435,14 @@ class StorageAdapter {
         let totalMatch = 0;
         for (const job of jobs) {
           totalMatch += job.match_percentage || 0;
-          
+
           if (job.ranking_level === 'high') stats.high_count++;
           else if (job.ranking_level === 'medium') stats.medium_count++;
           else if (job.ranking_level === 'low') stats.low_count++;
-          
+
           if (job.status === 'applied') stats.applied_count++;
           if (job.status === 'rejected') stats.rejected_count++;
-          
+
           stats.status_breakdown[job.status] = (stats.status_breakdown[job.status] || 0) + 1;
         }
 
@@ -434,20 +457,73 @@ class StorageAdapter {
   // ─────────────────────────────────────────────────────────────────────
 
   async _saveJobWithDualWrite(job) {
-    try {
-      const [localResult, apiResult] = await Promise.allSettled([
-        this._saveJobLocal(job),
-        this._saveJobApi(job),
-      ]);
+    const [localResult, apiResult] = await Promise.allSettled([
+      this._saveJobLocal(job),
+      this._saveJobApi(job),
+    ]);
 
-      // Prefer API result as source of truth, fallback to local
-      if (apiResult.status === 'fulfilled') {
-        return apiResult.value;
+    // Scenario 1: API Succeeded
+    if (apiResult.status === 'fulfilled') {
+      // If API succeeded but local failed, try to recover local in background
+      if (localResult.status === 'rejected') {
+        this.logger.warn('[StorageAdapter] API save succeeded, but local save failed. Retrying local save best-effort...', localResult.reason);
+        this._saveJobLocal(job).catch(e => this.logger.error('[StorageAdapter] Background local recovery failed:', e));
       }
+      return apiResult.value;
+    }
+
+    // Scenario 2: API Failed, but Local Succeeded
+    if (localResult.status === 'fulfilled') {
+      this.logger.warn('[StorageAdapter] API save failed, but local copy saved.', apiResult.reason);
       return localResult.value;
-    } catch (error) {
-      // Fall back to local if both fail
-      return this._saveJobLocal(job);
+    }
+
+    // Scenario 3: Both Failed - try one more direct local save before giving up
+    this.logger.error('[StorageAdapter] Dual-write failed. Retrying local save...', {
+      apiError: apiResult.reason,
+      localError: localResult.reason,
+    });
+
+    try {
+      return await this._saveJobLocal(job);
+    } catch (retryError) {
+      this.logger.error('[StorageAdapter] Recovery local save failed:', retryError);
+      throw new Error('Failed to save job to both API and local storage.');
+    }
+  }
+
+  /**
+   * Dual-write for batch operations
+   */
+  async _saveJobsBatchWithDualWrite(jobs) {
+    const [localResult, apiResult] = await Promise.allSettled([
+      this._saveJobsBatchLocal(jobs),
+      this._saveJobsBatchApi(jobs),
+    ]);
+
+    if (apiResult.status === 'fulfilled') {
+      if (localResult.status === 'rejected') {
+        this.logger.warn('[StorageAdapter] API batch save succeeded, but local failed. Retrying...', localResult.reason);
+        this._saveJobsBatchLocal(jobs).catch(e => this.logger.error('[StorageAdapter] Background batch local recovery failed:', e));
+      }
+      return apiResult.value;
+    }
+
+    if (localResult.status === 'fulfilled') {
+      this.logger.warn('[StorageAdapter] API batch save failed, but local copy saved.', apiResult.reason);
+      return localResult.value;
+    }
+
+    this.logger.error('[StorageAdapter] Dual-write batch failed. Retrying local...', {
+      apiError: apiResult.reason,
+      localError: localResult.reason
+    });
+
+    try {
+      return await this._saveJobsBatchLocal(jobs);
+    } catch (retryError) {
+      this.logger.error('[StorageAdapter] Recovery batch local save failed:', retryError);
+      throw new Error('Failed to save batch to both API and local storage.');
     }
   }
 
@@ -461,13 +537,15 @@ class StorageAdapter {
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
     }
-    return response.json();
+    const data = await response.json();
+    return data.job || data;
   }
 
   async _getJobApi(jobId) {
     const response = await fetch(`${this.apiUrl}/jobs/${jobId}`);
     if (!response.ok) return null;
-    return response.json();
+    const data = await response.json();
+    return data.job || data;
   }
 
   async _queryJobsApi(options = {}) {
@@ -482,7 +560,20 @@ class StorageAdapter {
 
     const response = await fetch(`${this.apiUrl}/jobs?${params}`);
     if (!response.ok) throw new Error('API error');
-    return response.json();
+    const data = await response.json();
+
+    // Unwrap from API wrapper if present
+    if (data.success && data.jobs !== undefined) {
+      return {
+        jobs: data.jobs,
+        total: data.total || data.jobs.length,
+        page: data.page || 1,
+        pageSize: data.pageSize || 10,
+        totalPages: Math.ceil((data.total || data.jobs.length) / (data.pageSize || 10))
+      };
+    }
+
+    return data;
   }
 
   async _updateJobApi(jobId, updates) {
@@ -495,7 +586,8 @@ class StorageAdapter {
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
     }
-    return response.json();
+    const data = await response.json();
+    return data.job || data;
   }
 
   async _deleteJobApi(jobId) {
@@ -518,13 +610,28 @@ class StorageAdapter {
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
     }
-    return response.json();
+    const data = await response.json();
+    return data.jobs || data.saved_jobs || data;
   }
 
   async _getStatsApi() {
     const response = await fetch(`${this.apiUrl}/jobs/stats`);
     if (!response.ok) throw new Error('API error');
-    return response.json();
+    const data = await response.json();
+
+    // Normalize to match local stats format
+    const apiStats = data.stats || data;
+
+    return {
+      total_jobs: apiStats.total_jobs || 0,
+      avg_match_percentage: Math.round(apiStats.average_match_percentage || apiStats.avg_match_percentage || 0),
+      high_count: apiStats.by_ranking?.high || apiStats.high_count || 0,
+      medium_count: apiStats.by_ranking?.medium || apiStats.medium_count || 0,
+      low_count: apiStats.by_ranking?.low || apiStats.low_count || 0,
+      applied_count: apiStats.by_status?.applied || apiStats.applied_count || 0,
+      rejected_count: apiStats.by_status?.rejected || apiStats.rejected_count || 0,
+      status_breakdown: apiStats.by_status || apiStats.status_breakdown || {}
+    };
   }
 
   // ─────────────────────────────────────────────────────────────────────
@@ -535,7 +642,7 @@ class StorageAdapter {
     if (!job.job_id) throw new Error('job_id is required');
     if (!job.job_title) throw new Error('job_title is required');
     if (!job.company_name) throw new Error('company_name is required');
-    
+
     return {
       ...job,
       match_percentage: Math.min(100, Math.max(0, job.match_percentage || 0)),
@@ -581,27 +688,34 @@ class StorageAdapter {
   }
 
   _applySearch(jobs, searchQuery) {
-    const q = searchQuery.toLowerCase();
-    return jobs.filter(j => 
-      j.job_title.toLowerCase().includes(q) ||
-      j.company_name.toLowerCase().includes(q) ||
-      (j.location && j.location.toLowerCase().includes(q)) ||
-      (j.notes && j.notes.toLowerCase().includes(q))
-    );
+    if (!searchQuery) return jobs;
+    const q = String(searchQuery).toLowerCase();
+
+    return jobs.filter(j => {
+      const title = String(j.job_title || '').toLowerCase();
+      const company = String(j.company_name || '').toLowerCase();
+      const location = String(j.location || '').toLowerCase();
+      const notes = String(j.notes || '').toLowerCase();
+
+      return title.includes(q) ||
+        company.includes(q) ||
+        location.includes(q) ||
+        notes.includes(q);
+    });
   }
 
   _applySorting(jobs, sortBy = 'created_at', sortOrder = 'desc') {
     const sorted = [...jobs].sort((a, b) => {
       const aVal = a[sortBy];
       const bVal = b[sortBy];
-      
+
       // Handle null/undefined values defensively
       if (typeof aVal === 'string' || typeof bVal === 'string') {
         const aStr = (aVal ?? '').toString();
         const bStr = (bVal ?? '').toString();
         return sortOrder === 'asc' ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
       }
-      
+
       // For numeric comparison, coerce null/undefined to 0
       const aNum = Number(aVal ?? 0);
       const bNum = Number(bVal ?? 0);
@@ -614,16 +728,18 @@ class StorageAdapter {
   // Cache management
   _isCached(key) {
     if (!this.cacheEnabled) return false;
-    
+
     const timestamp = this.cacheTimestamps.get(key);
     if (!timestamp) return false;
-    
-    if (Date.now() - timestamp > this.cacheTTL) {
+
+    const ttl = this.cacheTTLs.get(key) || this.cacheTTL;
+    if (Date.now() - timestamp > ttl) {
       this.cache.delete(key);
       this.cacheTimestamps.delete(key);
+      this.cacheTTLs.delete(key);
       return false;
     }
-    
+
     return this.cache.has(key);
   }
 
@@ -635,6 +751,9 @@ class StorageAdapter {
     if (!this.cacheEnabled) return;
     this.cache.set(key, value);
     this.cacheTimestamps.set(key, Date.now());
+    if (ttl) {
+      this.cacheTTLs.set(key, ttl);
+    }
   }
 
   _invalidateCache(pattern = '*') {
@@ -654,10 +773,17 @@ class StorageAdapter {
   }
 
   async _checkBackendHealth() {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
     try {
-      const response = await fetch(`${this.apiUrl}/health`, { timeout: 5000 });
+      const response = await fetch(`${this.apiUrl}/health`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
       return response.ok;
-    } catch {
+    } catch (error) {
+      this.logger.warn('[StorageAdapter] Health check failed or timed out:', error.name === 'AbortError' ? 'Timeout' : error.message);
       return false;
     }
   }
@@ -686,7 +812,7 @@ class StorageAdapter {
 
 // Export singleton instance
 const storageAdapter = new StorageAdapter({
-  backend: 'local', // Will change to 'api' after migration
+  backend: 'api', // Detect and sync with API by default
   cacheEnabled: true,
 });
 

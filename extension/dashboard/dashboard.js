@@ -27,32 +27,53 @@
   };
 
   // ─── DOM References ────────────────────────────────────────────────────
+  let dom = {};
 
-  const dom = {
-    app: document.getElementById("dashboardApp"),
-    header: document.querySelector(".dashboard-header"),
-    emptyState: document.getElementById("emptyState"),
-    tableContainer: document.getElementById("tableContainer"),
-    tableBody: document.getElementById("jobsTableBody"),
-    jobCount: document.getElementById("jobCount"),
-    loadingState: document.getElementById("loadingState"),
-    filterStatus: document.getElementById("filterStatus"),
-    filterMatch: document.getElementById("filterMatch"),
-    searchBox: document.getElementById("searchBox"),
-    resetBtn: document.getElementById("resetFiltersBtn"),
-  };
+  function initDomReferences() {
+    dom = {
+      app: document.getElementById("dashboardApp"),
+      header: document.querySelector(".dashboard-header"),
+      emptyState: document.getElementById("emptyState"),
+      tableContainer: document.getElementById("tableContainer"),
+      tableBody: document.getElementById("jobsTableBody"),
+      jobCount: document.getElementById("jobCount"),
+      loadingState: document.getElementById("loadingState"),
+      filterStatus: document.getElementById("filterStatus"),
+      filterMatch: document.getElementById("filterMatch"),
+      searchBox: document.getElementById("searchBox"),
+      resetBtn: document.getElementById("resetFiltersBtn"),
+    };
+  }
 
   // ─── Initialization ────────────────────────────────────────────────────
 
   async function init() {
     try {
+      // Lazy load DOM references
+      initDomReferences();
+
+      // Defensive check: Ensure we are in a supported environment
+      if (typeof chrome === 'undefined' || !chrome.storage) {
+        throw new Error("Chrome storage API not available");
+      }
+
+      // Defensive check: Ensure main app container exists
+      if (!dom.app && !document.getElementById("dashboardApp")) {
+        console.warn("[Dashboard] App container not found, skipping initialization");
+        return;
+      }
+
       await loadJobs();
       attachEventListeners();
       applyFilters();
       renderUI();
+      console.log("[Dashboard] Initialized successfully ✓");
     } catch (error) {
       console.error("[Dashboard] Init error:", error);
-      renderError("Failed to load dashboard");
+      // Only attempt to render error if the UI container exists
+      if (dom.app || document.getElementById("dashboardApp") || document.getElementById("emptyState")) {
+        renderError("Failed to load dashboard: " + (error.message || "Unknown error"));
+      }
     }
   }
 
@@ -62,15 +83,33 @@
    * Load jobs from chrome.storage.local into memory
    */
   async function loadJobs() {
+    // Check if StorageAdapter/storageAdapter global is available (from extension context)
+    if (typeof storageAdapter !== 'undefined' && storageAdapter.queryJobs) {
+      try {
+        const result = await storageAdapter.queryJobs({ pageSize: 500 });
+        state.jobs = result.jobs || [];
+        console.log(`[Dashboard] Loaded ${state.jobs.length} jobs via StorageAdapter`);
+        return;
+      } catch (error) {
+        console.warn("[Dashboard] StorageAdapter query failed, falling back to local storage:", error);
+      }
+    }
+
     return new Promise((resolve, reject) => {
-      chrome.storage.local.get(["jobs"], (result) => {
+      if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) {
+        resolve([]); // Silent fail for non-extension context
+        return;
+      }
+
+      chrome.storage.local.get(["jobs", "tracked_jobs"], (result) => {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
           return;
         }
 
-        state.jobs = result.jobs || [];
-        console.log(`[Dashboard] Loaded ${state.jobs.length} jobs from storage`);
+        // Try 'tracked_jobs' first (new system), then 'jobs' (legacy)
+        state.jobs = result.tracked_jobs || result.jobs || [];
+        console.log(`[Dashboard] Loaded ${state.jobs.length} jobs from local storage`);
         resolve();
       });
     });
@@ -82,12 +121,18 @@
    */
   async function saveJobs() {
     return new Promise((resolve, reject) => {
-      chrome.storage.local.set({ jobs: state.jobs }, () => {
+      if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) {
+        state.isDirty = false;
+        resolve(); // Silent fail for non-extension context
+        return;
+      }
+
+      chrome.storage.local.set({ tracked_jobs: state.jobs }, () => {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
           return;
         }
-        console.log("[Dashboard] Jobs saved to storage");
+        console.log("[Dashboard] Jobs saved to storage (tracked_jobs)");
         state.isDirty = false;
         resolve();
       });
@@ -238,9 +283,9 @@
     state.filterMatch = "";
     state.searchQuery = "";
 
-    dom.filterStatus.value = "";
-    dom.filterMatch.value = "";
-    dom.searchBox.value = "";
+    if (dom.filterStatus) dom.filterStatus.value = "";
+    if (dom.filterMatch) dom.filterMatch.value = "";
+    if (dom.searchBox) dom.searchBox.value = "";
 
     applyFilters();
     renderUI();
@@ -269,9 +314,8 @@
     } else if (total === filtered) {
       dom.jobCount.textContent = `${total} job${total === 1 ? "" : "s"}`;
     } else {
-      dom.jobCount.textContent = `${filtered} of ${total} job${
-        total === 1 ? "" : "s"
-      }`;
+      dom.jobCount.textContent = `${filtered} of ${total} job${total === 1 ? "" : "s"
+        }`;
     }
   }
 
@@ -571,21 +615,21 @@
   function renderError(message) {
     dom.emptyState.classList.remove("hidden");
     dom.emptyState.innerHTML = ""; // Clear existing content
-    
+
     const errorContainer = document.createElement("div");
     errorContainer.style.textAlign = "center";
     errorContainer.style.color = "#e74c3c";
-    
+
     const titleEl = document.createElement("p");
     titleEl.style.fontWeight = "500";
     titleEl.style.margin = "0 0 4px 0";
     titleEl.textContent = `⚠ ${message}`;
-    
+
     const infoEl = document.createElement("p");
     infoEl.style.fontSize = "11px";
     infoEl.style.margin = "0";
     infoEl.textContent = "Please refresh the popup or restart the extension.";
-    
+
     errorContainer.appendChild(titleEl);
     errorContainer.appendChild(infoEl);
     dom.emptyState.appendChild(errorContainer);

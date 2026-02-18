@@ -25,6 +25,15 @@ def _get_client() -> AsyncOpenAI:
     )
 
 
+def _sanitize_raw(raw: str, max_length: int = 100) -> str:
+    """Sanitize raw LLM response for error messages to avoid PII leakage."""
+    if not raw:
+        return "Empty response"
+    if len(raw) <= max_length:
+        return raw
+    return f"{raw[:max_length]}... [truncated/redacted]"
+
+
 async def _call_llm(
     messages: list[dict],
     temperature: float = 0.7,
@@ -62,11 +71,11 @@ async def _call_llm(
         data = json.loads(raw)
     except json.JSONDecodeError as e:
         logger.error("Failed to parse LLM response as JSON: %s. Raw response: %s", e, raw)
-        raise ValueError(f"AI returned an invalid JSON response. Raw: {raw}") from e
+        raise ValueError(f"AI returned an invalid JSON response. Raw (truncated): {_sanitize_raw(raw)}") from e
 
     if not isinstance(data, dict):
         logger.error("LLM response is not a dict: %s. Raw: %s", type(data), raw)
-        raise ValueError(f"Expected JSON object (dict), got {type(data).__name__}. Raw: {raw}")
+        raise ValueError(f"Expected JSON object (dict), got {type(data).__name__}. Raw (redacted): <redacted>")
 
     if expected_keys:
         missing_keys = expected_keys - set(data.keys())
@@ -74,7 +83,7 @@ async def _call_llm(
             logger.error("LLM response missing keys: %s. Present keys: %s. Raw: %s", missing_keys, list(data.keys()), raw)
             raise ValueError(
                 f"LLM response is missing required keys: {', '.join(sorted(missing_keys))}. "
-                f"Expected keys: {', '.join(sorted(expected_keys))}. Raw: {raw}"
+                f"Expected keys: {', '.join(sorted(expected_keys))}. Raw (truncated): {_sanitize_raw(raw)}"
             )
 
     return data
@@ -300,13 +309,29 @@ async def match_jobs_batch_service(
         return results
     else:
         logger.info(f"[Batch Scorer] Normal mode: scoring {len(jobs)} jobs with LLM (parallel)")
-        # For production: use asyncio.gather to score jobs in parallel
-        # For MVP: score sequentially to avoid rate limits
-        results = []
-        for job in jobs:
-            score = await _score_job_llm(job, user_profile)
-            results.append(score)
-        return results
+        # Use asyncio.gather to score jobs in parallel to meet the < 5s performance claim
+        import asyncio
+        tasks = [_score_job_llm(job, user_profile) for job in jobs]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Filter out exceptions and log them
+        valid_results = []
+        for i, res in enumerate(results):
+            if isinstance(res, Exception):
+                logger.error(f"[Batch Scorer] Error scoring job {jobs[i].get('job_id', 'unknown')}: {res}")
+                # Add a failed result placeholder
+                valid_results.append({
+                    "job_id": jobs[i].get("job_id"),
+                    "match_score": 0,
+                    "ranking_level": "none",
+                    "matched_skills": [],
+                    "missing_skills": [],
+                    "summary": "Error during AI scoring",
+                    "error": str(res)
+                })
+            else:
+                valid_results.append(res)
+        return valid_results
 
 
 def _score_job_heuristic(job: dict, user_profile: dict) -> dict:
@@ -361,8 +386,8 @@ def _score_job_heuristic(job: dict, user_profile: dict) -> dict:
     # Total score
     total_score = skill_score + role_score + exp_score
     
-    # Find missing skills (skills NOT in description)
-    missing_skills = [s for s in user_skills if s not in description]
+    # Find missing skills (skills NOT in description AND NOT in job_title)
+    missing_skills = [s for s in user_skills if s not in description and s not in job_title]
     
     # Ranking logic
     if total_score >= 70:

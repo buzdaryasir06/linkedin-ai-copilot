@@ -3,12 +3,10 @@
  *
  * Proxies API requests between the popup/content scripts and the
  * FastAPI backend running at localhost:8000.
- *
- * Handles:
- * - Comment generation requests
- * - Job analysis requests
- * - User profile retrieval/updates
  */
+
+// Import storage adapter
+importScripts('storage/storage-adapter.js');
 
 const API_BASE = "http://localhost:8000";
 
@@ -96,6 +94,31 @@ async function handleMessage(message) {
                     user_experience: message.userExperience || "",
                 });
                 return { success: true, data };
+            }
+
+            case "BATCH_SCORE_JOBS": {
+                const data = await apiRequest("/jobs/batch-score-jobs", "POST", {
+                    jobs: message.jobs,
+                    user_profile: {
+                        skills: message.userProfile?.skills || [],
+                        experience: message.userProfile?.experience || "",
+                        target_role: message.userProfile?.target_role || "Professional",
+                    },
+                    quick_mode: message.quickMode || false,
+                });
+                return { success: true, data: data.results };
+            }
+
+            case "STORE_SCANNED_JOBS": {
+                // Save to StorageAdapter (handles API sync + Local storage)
+                const savedJobs = await storageAdapter.saveJobsInBatch(message.jobs);
+                return { success: true, data: savedJobs };
+            }
+
+            case "TRACK_JOB": {
+                // Save to StorageAdapter (handles API sync + Local storage)
+                const savedJob = await storageAdapter.saveJob(message.job);
+                return { success: true, data: savedJob };
             }
 
             // ── User Profile ────────────────────────────────────────────

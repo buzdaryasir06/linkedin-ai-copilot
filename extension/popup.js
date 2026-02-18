@@ -43,6 +43,7 @@
     const statusText = document.getElementById("statusText");
 
     let currentMode = "comment"; // "comment" | "job" | "settings"
+    let lastExtractedJob = null;
 
     // ─── Refresh System ────────────────────────────────────────────────────
 
@@ -55,26 +56,27 @@
             // Clear the post text input
             postTextInput.value = "";
             postTextInput.placeholder = "Paste a LinkedIn post here or click the AI button on a post…";
-            
+
             // Clear the results
             commentsContainer.innerHTML = "";
             commentsContainer.classList.add("hidden");
-            
+
             showToast("✨ Post cleared! Click AI button on next post or paste new content.");
             postTextInput.focus();
         } else if (mode === "job") {
             // Clear the job text input
             jobTextInput.value = "";
             jobTextInput.placeholder = "Copy and paste the full job description here… The more detail, the better the analysis.";
-            
+
             // Clear the results
             jobResultsContainer.innerHTML = "";
             jobResultsContainer.classList.add("hidden");
-            
+
+            lastExtractedJob = null;
             showToast("✨ Job cleared! Click AI button on next job or paste new content.");
             jobTextInput.focus();
         }
-        
+
         // Listen for new pending text from AI button click
         setTimeout(() => {
             loadPendingText();
@@ -153,7 +155,7 @@
      */
     async function initializeDashboard() {
         if (!dashboardContainer) return;
-        
+
         // Check if already meaningfully initialized (not just loading placeholder)
         const currentContent = dashboardContainer.innerHTML.trim();
         if (currentContent && !currentContent.includes("Dashboard scripts loading")) {
@@ -161,13 +163,16 @@
         }
 
         // Check if all required scripts are loaded
-        if (typeof StorageAdapter !== 'undefined' && 
-            typeof DashboardUI !== 'undefined' && 
-            typeof JobStorage !== 'undefined') {
+        if (typeof DashboardUI !== 'undefined' &&
+            typeof storageAdapter !== 'undefined' &&
+            typeof jobStorage !== 'undefined') {
             try {
-                const adapter = new StorageAdapter();
-                const jobStorage = new JobStorage(adapter);
-                const ui = new DashboardUI(dashboardContainer, adapter, jobStorage);
+                // Use global singletons for consistency
+                const ui = new DashboardUI({
+                    container: dashboardContainer,
+                    storage: storageAdapter,
+                    jobStorage: jobStorage
+                });
                 await ui.initialize();
             } catch (error) {
                 console.error('[Popup] Dashboard initialization error:', error);
@@ -395,14 +400,22 @@
         <div style="font-size: 11px; color: var(--text-light); margin-bottom: 6px;">Copy this and use it when applying — it highlights your strengths for this specific job.</div>
         <div class="ai-note">${escapeHtml(data.personalized_note)}</div>
         <div style="margin-top:8px">
-          <button class="action-btn copy-note-btn" title="Copy note">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
-            Copy Note
-          </button>
-        </div>
-      </div>` : ""}
+            <button class="action-btn copy-note-btn" title="Copy note">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              Copy Note
+            </button>
+            <button class="action-btn track-job-btn" title="Save to Dashboard">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              Track Job
+            </button>
+          </div>
+        </div>` : ""}
 
       <!-- Resume Tips -->
       ${data.resume_tips.length ? `
@@ -431,6 +444,45 @@
         const copyNoteBtn = jobResultsContainer.querySelector(".copy-note-btn");
         if (copyNoteBtn) {
             copyNoteBtn.addEventListener("click", () => handleCopy(data.personalized_note, copyNoteBtn));
+        }
+
+        // Track Job button
+        const trackJobBtn = jobResultsContainer.querySelector(".track-job-btn");
+        if (trackJobBtn) {
+            trackJobBtn.addEventListener("click", () => {
+                const jobToTrack = {
+                    job_id: lastExtractedJob?.job_id || "manual_" + Date.now(),
+                    job_title: lastExtractedJob?.job_title || "Manual Analysis",
+                    company_name: lastExtractedJob?.company_name || "Unknown Company",
+                    location: lastExtractedJob?.location || "",
+                    description: jobTextInput.value,
+                    match_percentage: data.match_percentage,
+                    ranking_level: data.match_percentage >= 80 ? "high" : (data.match_percentage >= 50 ? "medium" : "low"),
+                    matched_skills: data.matched_skills,
+                    missing_skills: data.missing_skills,
+                    status: "new",
+                    source: "manual"
+                };
+                // Guard against missing storage adapter
+                if (typeof storageAdapter === 'undefined' || !storageAdapter || typeof storageAdapter.saveJob !== 'function') {
+                    console.error('[Popup] Storage adapter not available for tracking.');
+                    showToast("❌ Storage unavailable. Please reload extension.");
+                    return;
+                }
+
+                // Save via storageAdapter directly for immediate local update
+                storageAdapter.saveJob(jobToTrack)
+                    .then((savedJob) => {
+                        showToast("Job added to dashboard! ✓");
+                        trackJobBtn.disabled = true;
+                        trackJobBtn.textContent = "Tracked ✓";
+                        trackJobBtn.style.opacity = "0.7";
+                    })
+                    .catch((error) => {
+                        console.error('[Popup] TRACK_JOB error:', error);
+                        showToast("❌ Failed to track job. Check backend connection.");
+                    });
+            });
         }
 
         // Add refresh button at the bottom
@@ -712,7 +764,8 @@
                 }
 
                 const jobData = response.data;
-                
+                lastExtractedJob = jobData; // Store for tracking
+
                 // Fill in the job text field with extracted description
                 if (jobData.description) {
                     jobTextInput.value = jobData.description;
