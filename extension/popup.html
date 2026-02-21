@@ -3,10 +3,10 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=400, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LinkedIn AI Copilot</title>
     <link rel="stylesheet" href="popup.css" />
-    <link rel="stylesheet" href="dashboard/dashboard-styles.css">
+
 </head>
 
 <body>
@@ -44,15 +44,7 @@
             </svg>
             Job Match
         </button>
-        <button id="dashboardModeBtn" class="mode-btn" data-mode="dashboard">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="7" height="7" />
-                <rect x="14" y="3" width="7" height="7" />
-                <rect x="14" y="14" width="7" height="7" />
-                <rect x="3" y="14" width="7" height="7" />
-            </svg>
-            Dashboard
-        </button>
+
     </div>
 
     <!-- ─── Backend Status ─────────────────────────────────────────────── -->
@@ -75,6 +67,14 @@
                 </button>
             </div>
             <textarea id="postText" placeholder="Paste a LinkedIn post here …" rows="3"></textarea>
+            <button id="autoDetectPostBtn" type="button" class="secondary-btn"
+                style="margin-top: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="9" />
+                    <polyline points="12 7 12 12 16 14"></polyline>
+                </svg>
+                Auto-detect from LinkedIn Feed
+            </button>
         </div>
         <button id="generateBtn" class="primary-btn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -165,12 +165,7 @@
     </section>
 
     <!-- ─── Dashboard Panel ────────────────────────────────────────────── -->
-    <section id="dashboardPanel" class="panel hidden"
-        style="display: flex; flex-direction: column; max-height: 600px; overflow: hidden;">
-        <div id="dashboardContainer" style="flex: 1; overflow-y: auto;">
-            <!-- Dashboard UI rendered here -->
-        </div>
-    </section>
+
 
     <!-- ─── Settings Panel ─────────────────────────────────────────────── -->
     <section id="settingsPanel" class="panel hidden">
@@ -269,10 +264,9 @@
         <p>AI is thinking…</p>
     </div>
 
-    <script src="storage/storage-adapter.js"></script>
-    <script src="storage/job-storage.js"></script>
+
     <script src="utils/validators.js"></script>
-    <script src="dashboard/dashboard-ui.js"></script>
+
     <script src="popup.js"></script>
 
 </body>

@@ -6,7 +6,7 @@
  */
 
 // Import storage adapter
-importScripts('storage/storage-adapter.js');
+
 
 const API_BASE = "http://localhost:8000";
 
@@ -109,17 +109,9 @@ async function handleMessage(message) {
                 return { success: true, data: data.results };
             }
 
-            case "STORE_SCANNED_JOBS": {
-                // Save to StorageAdapter (handles API sync + Local storage)
-                const savedJobs = await storageAdapter.saveJobsInBatch(message.jobs);
-                return { success: true, data: savedJobs };
-            }
 
-            case "TRACK_JOB": {
-                // Save to StorageAdapter (handles API sync + Local storage)
-                const savedJob = await storageAdapter.saveJob(message.job);
-                return { success: true, data: savedJob };
-            }
+
+
 
             // ── User Profile ────────────────────────────────────────────
             case "GET_PROFILE": {
@@ -166,6 +158,11 @@ async function handleMessage(message) {
 
 chrome.runtime.onInstalled.addListener(() => {
     console.log("[LinkedIn AI Copilot] Extension installed ✓");
+
+    // Enable side panel to open when the extension icon is clicked
+    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
+        .catch((error) => console.error("[LinkedIn AI Copilot] Side panel setup error:", error));
+
     // Initialize default storage values
     chrome.storage.local.set({
         pendingText: "",

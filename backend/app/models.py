@@ -177,3 +177,78 @@ class ProfileEnhancementResponse(BaseModel):
     differentiation_analysis: DifferentiationAnalysis
     overall_score: ProfileEnhancementScore
     executive_summary: str = Field(..., description="2-3 sentence summary of key opportunities and recommendations")
+
+
+# ─── Batch Scoring ───────────────────────────────────────────────────────────
+
+class BatchJobItem(BaseModel):
+    """A single job to be scored in a batch request."""
+    job_id: str = Field(..., min_length=1, description="Unique job identifier")
+    job_title: str = Field(..., min_length=1, description="Job title")
+    company_name: str = Field("", description="Company name")
+    location: str = Field("", description="Job location")
+    description: str = Field("", description="Job description text")
+
+
+class BatchUserProfile(BaseModel):
+    """User profile info for batch scoring context."""
+    skills: list[str] = Field(default_factory=list)
+    experience: str = ""
+    target_role: str = ""
+
+
+class BatchScoreRequest(BaseModel):
+    """Request to score multiple jobs against a user profile."""
+    jobs: list[BatchJobItem] = Field(..., min_length=1, max_length=50, description="Jobs to score (max 50)")
+    user_profile: BatchUserProfile = Field(default_factory=BatchUserProfile)
+    quick_mode: bool = Field(False, description="If true, use faster/cheaper scoring")
+
+
+# ─── Job Tracking ────────────────────────────────────────────────────────────
+
+class TrackJobRequest(BaseModel):
+    """Request to save an analyzed job to the tracking dashboard."""
+    job_id: Optional[str] = None
+    job_title: str = Field(..., min_length=1, description="Job title")
+    company_name: str = Field(..., min_length=1, description="Company name")
+    location: str = ""
+    description: str = ""
+    job_url: str = ""
+    source_linkedin_id: Optional[str] = None
+    match_percentage: int = Field(0, ge=0, le=100)
+    ranking_level: str = "low"
+    matched_skills: list[str] = Field(default_factory=list)
+    missing_skills: list[str] = Field(default_factory=list)
+    status: str = "new"
+    source: str = "manual"
+
+
+class JobUpdateRequest(BaseModel):
+    """Allowed fields for updating a tracked job."""
+    status: Optional[str] = None
+    notes: Optional[str] = None
+    application_date: Optional[str] = None
+    rejection_date: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    interview_date: Optional[str] = None
+    interview_stage: Optional[str] = None
+    salary_min: Optional[int] = None
+    salary_max: Optional[int] = None
+
+
+class BatchSaveJobsRequest(BaseModel):
+    """Request to bulk-save multiple jobs."""
+    jobs: list[TrackJobRequest] = Field(..., min_length=1, max_length=100, description="Jobs to save (max 100)")
+
+
+# ─── Profile Analysis ────────────────────────────────────────────────────────
+
+class ProfileAnalysisRequest(BaseModel):
+    """Request to analyze raw LinkedIn profile text."""
+    raw_text: str = Field(..., min_length=20, description="Raw LinkedIn profile text to analyze")
+
+
+class ProfileEnhanceRequest(BaseModel):
+    """Request to get AI-powered profile improvement suggestions."""
+    raw_text: str = Field(..., min_length=20, description="Raw LinkedIn profile text to enhance")
+

@@ -1,10 +1,12 @@
 # LinkedIn AI Copilot
 
-> **Personal AI-powered LinkedIn assistant** – Generate smart comments and analyze job postings, all from a clean Chrome extension.
+> **Personal AI-powered LinkedIn assistant** – Generate smart comments, analyze job postings, and enhance your profile, all from a clean Chrome extension.
 
 ![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-blue?logo=googlechrome)
 ![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi)
-![OpenAI](https://img.shields.io/badge/AI-OpenAI-412991?logo=openai)
+![Groq](https://img.shields.io/badge/AI-Groq%20%2B%20Llama%203-412991?logo=meta)
+[![CI](https://github.com/your-username/linkedin-ai-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/linkedin-ai-copilot/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 ---
 
@@ -24,19 +26,20 @@
 - Provides **resume improvement tips**
 - Suggests **similar roles** to explore
 
-### 🎯 Profile Enhancement System (NEW!)
+### Job Scanner (Batch Scoring)
+- Automatically scans LinkedIn job search pages
+- **Batch scores** multiple jobs against your profile
+- Injects **color-coded badges** directly onto job cards
+- Hover/click for detailed match information
+
+### Profile Enhancement
 - **Comprehensive profile optimization** with structured, actionable suggestions
-- Analyzes **6 core profile sections**: Headline, About, Experience, Skills, Featured, Context
-- Delivers **7 detailed improvement sections** (not generic advice):
-  - **Headline Optimization** — High-impact rewrites with keyword strategy
-  - **About Section Enhancement** — Professional summary with positioning & authority
-  - **Experience Improvements** — Convert bullets to impact-driven CAR format
-  - **Skills Strategy** — Skill recommendations and optimal ordering for target role
-  - **Recruiter Optimization** — Keywords and positioning for discoverability
-  - **Differentiation Analysis** — Tone, authority signals, competitive advantages
-  - **Profile Score** — 0-10 rating with ranked improvement priorities
-- **Role-tailored suggestions** for AI Engineers, Backend Devs, Marketing, Leadership, etc.
-- **Competitive positioning** for standing out in selective markets
+- Analyzes 6 core profile sections: Headline, About, Experience, Skills, Featured, Context
+- **Headline rewriting** with keyword strategy
+- **About section enhancement** with positioning & authority
+- **Experience improvements** in impact-driven CAR format
+- **Skills strategy** and recruiter optimization
+- **Profile scoring** (0-10) with ranked improvement priorities
 - See [PROFILE_ENHANCEMENT_GUIDE.md](./PROFILE_ENHANCEMENT_GUIDE.md) for full details
 
 ### Profile Settings
@@ -44,13 +47,6 @@
 - **Auto-detect from LinkedIn Profile** button to extract data automatically
 - Auto-fills Job Mode with your stored profile
 - Persisted in local SQLite database
-- **Clear buttons** on all input fields for easy management
-
-### UI & Accessibility
-- Manual copy-paste workflow for maximum control
-- 8 accessible clear buttons with **ARIA labels** for screen readers
-- **Type-safe buttons** to prevent accidental form submission
-- Clean, minimalist LinkedIn-themed interface
 
 ---
 
@@ -58,32 +54,49 @@
 
 ```
 linkedin-ai-copilot/
+├── .github/workflows/
+│   └── ci.yml                   # GitHub Actions CI pipeline
 ├── backend/
 │   ├── app/
 │   │   ├── __init__.py
 │   │   ├── main.py              # FastAPI app, CORS, routes
-│   │   ├── config.py            # Settings (env vars)
-│   │   ├── models.py            # Pydantic schemas
+│   │   ├── config.py            # Settings (env vars via pydantic-settings)
+│   │   ├── models.py            # Pydantic request/response schemas
 │   │   ├── prompts.py           # LLM prompt templates
-│   │   ├── services.py          # OpenAI integration
-│   │   ├── database.py          # SQLite user profile
+│   │   ├── services.py          # Groq/LLM integration (with retry logic)
+│   │   ├── database.py          # SQLite async persistence
 │   │   └── routers/
 │   │       ├── __init__.py
 │   │       ├── comments.py      # POST /generate-comment
-│   │       └── jobs.py          # POST /analyze-job
+│   │       ├── jobs.py          # POST /analyze-job
+│   │       └── batch_scoring.py # POST /jobs/batch-score-jobs + job tracking CRUD
+│   ├── tests/
+│   │   ├── conftest.py          # Pytest fixtures
+│   │   ├── test_database.py     # Database CRUD tests
+│   │   └── test_api.py          # API endpoint tests
 │   ├── requirements.txt
+│   ├── pyproject.toml
 │   └── .env.example
 ├── extension/
-│   ├── manifest.json            # Manifest V3
+│   ├── manifest.json            # Chrome Manifest V3
 │   ├── popup.html               # Extension popup UI
-│   ├── popup.js                 # Popup logic
+│   ├── popup.js                 # Popup logic (comment, job, settings, enhance modes)
 │   ├── popup.css                # LinkedIn-themed styles
-│   ├── content.js               # DOM text extraction
+│   ├── content.js               # DOM text extraction from LinkedIn
 │   ├── background.js            # API proxy service worker
+│   ├── scanner/
+│   │   ├── job-scanner.js       # Job page scanning orchestrator
+│   │   ├── job-page-detector.js # LinkedIn job page detection
+│   │   ├── job-card-parser.js   # Job card DOM parsing
+│   │   └── badge-overlay.js     # Match score badge injection
+│   ├── utils/
+│   │   └── validators.js        # Data validation utilities
 │   └── icons/
 │       ├── icon16.png
 │       ├── icon48.png
 │       └── icon128.png
+├── CONTRIBUTING.md
+├── LICENSE
 └── README.md
 ```
 
@@ -91,9 +104,9 @@ linkedin-ai-copilot/
 
 ## ⚙️ Prerequisites
 
-- **Python 3.10+**
+- **Python 3.11+**
 - **Google Chrome** (or Chromium-based browser)
-- **OpenAI API key** ([Get one here](https://platform.openai.com/api-keys))
+- **Groq API key** ([Free at console.groq.com](https://console.groq.com))
 
 ---
 
@@ -102,25 +115,19 @@ linkedin-ai-copilot/
 ### 1. Backend Setup
 
 ```bash
-# Navigate to the backend directory
 cd backend
 
-# Create a virtual environment (recommended)
+# Create and activate virtual environment
 python -m venv venv
-
-# Activate it
-# Windows:
-venv\Scripts\activate
-# macOS/Linux:
-source venv/bin/activate
+source venv/bin/activate   # Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
 
 # Create your .env file
 cp .env.example .env
-# Edit .env and add your OpenAI API key:
-# OPENAI_API_KEY=sk-your-actual-key-here
+# Edit .env and add your Groq API key:
+# GROQ_API_KEY=gsk_your_key_here
 
 # Start the server
 uvicorn app.main:app --reload --port 8000
@@ -142,14 +149,13 @@ INFO:     Uvicorn running on http://127.0.0.1:8000
 
 ### 3. Usage
 
-1. Make sure the backend server is running (`uvicorn app.main:app --reload`)
+1. Make sure the backend server is running
 2. Navigate to [linkedin.com](https://www.linkedin.com)
-3. You'll see small **AI** buttons appear near posts and job listings
-4. Click the extension icon in your toolbar to open the popup
-5. Toggle between **Comment Mode** and **Job Mode**
-6. Enter text (or let it auto-extract from the page)
-7. Click **Generate Comments** or **Analyze Job**
-8. Use **Copy**, **Insert**, or **Regenerate** as needed
+3. Click the extension icon in your toolbar
+4. Toggle between **Comment Mode** and **Job Mode**
+5. Enter text or let it auto-extract from the page
+6. Click **Generate Comments** or **Analyze Job**
+7. Use **Copy**, **Insert**, or **Regenerate** as needed
 
 ---
 
@@ -159,122 +165,46 @@ INFO:     Uvicorn running on http://127.0.0.1:8000
 |--------|----------|-------------|
 | `POST` | `/generate-comment` | Generate 3 comment suggestions |
 | `POST` | `/analyze-job` | Analyze a job posting |
-| `POST` | `/enhance-profile-advanced` | **[NEW]** Comprehensive profile enhancement with structured suggestions |
+| `POST` | `/enhance-profile` | Basic profile enhancement |
+| `POST` | `/enhance-profile-advanced` | Comprehensive profile enhancement |
+| `POST` | `/analyze-profile` | Analyze raw profile text |
 | `GET` | `/profile` | Get stored user profile |
 | `PUT` | `/profile` | Update user profile |
+| `POST` | `/jobs/batch-score-jobs` | Batch score multiple jobs |
+| `POST` | `/jobs/track` | Save a tracked job |
+| `GET` | `/jobs/` | List tracked jobs (paginated) |
+| `GET` | `/jobs/stats` | Dashboard statistics |
 | `GET` | `/health` | Health check |
 
-### Example: Generate Comments
-
-```bash
-curl -X POST http://localhost:8000/generate-comment \
-  -H "Content-Type: application/json" \
-  -d '{"post_text": "AI is transforming how we build software."}'
-```
-
-### Example: Analyze Job
-
-```bash
-curl -X POST http://localhost:8000/analyze-job \
-  -H "Content-Type: application/json" \
-  -d '{
-    "job_text": "Looking for a Senior Python Developer with FastAPI experience...",
-    "user_skills": ["Python", "FastAPI", "PostgreSQL"],
-    "user_experience": "3 years backend development"
-  }'
-```
-
-### Example: Enhance Profile (NEW!)
-
-```bash
-curl -X POST http://localhost:8000/enhance-profile-advanced \
-  -H "Content-Type: application/json" \
-  -d '{
-    "current_headline": "Python Developer | Open to Opportunities",
-    "about_section": "Experienced developer passionate about building scalable systems...",
-    "experience_descriptions": ["Developed REST APIs", "Led a team", "Optimized databases"],
-    "current_skills": ["Python", "FastAPI", "PostgreSQL"],
-    "target_role": "AI/ML Backend Engineer",
-    "years_of_experience": 5,
-    "industry": "FinTech / SaaS",
-    "company_experience": "Series A startups"
-  }'
-```
-
-Response includes:
-- Headline optimization with keywords
-- Enhanced about section with positioning
-- Experience improvements with impact metrics
-- Skills strategy with niche positioning
-- Recruiter optimization keywords
-- Profile score (0-10) with ranked priorities
-
-See [PROFILE_ENHANCEMENT_EXAMPLES.md](./PROFILE_ENHANCEMENT_EXAMPLES.md) for complete real-world examples.
-
 ---
 
-## � Recent Updates (v2.0.0)
+## 🧪 Running Tests
 
-### ✨ Profile Enhancement System (Major Feature!)
-- **Comprehensive profile optimization** with 7 detailed analysis sections
-- **Rewritten examples** for every suggestion (headline, about, experience, skills)
-- **Role-tailored recommendations** for target positions
-- **Recruiter optimization** with keyword strategy for discoverability
-- **Differentiation analysis** for competitive positioning
-- **Profile scoring** (0-10) with ranked improvement priorities
-- **No generic advice** — every suggestion is specific and actionable
-- See [PROFILE_ENHANCEMENT_GUIDE.md](./PROFILE_ENHANCEMENT_GUIDE.md) for full documentation
-- Real-world examples in [PROFILE_ENHANCEMENT_EXAMPLES.md](./PROFILE_ENHANCEMENT_EXAMPLES.md)
+```bash
+cd backend
+pip install pytest pytest-asyncio httpx
 
-### 🔄 Architecture Improvements
-- **Enhanced prompting** with expert-level system instructions
-- **Structured output** with validated Pydantic models
-- **Role-aware analysis** that understands market positioning
-- **Authority signal detection** and recommendations
-- **Competitive positioning framework** for tech talent markets
-
-### ✨ Previous Features (v1.1.0)
-- **Auto-detect from LinkedIn Profile** — Automatically extract name, headline, skills, and experience
-- **Clear Buttons** — Quick field management with accessibility compliance
-
----
-
-## 📚 Documentation
-
-- **[PROFILE_ENHANCEMENT_GUIDE.md](./PROFILE_ENHANCEMENT_GUIDE.md)** — Comprehensive guide to the Profile Enhancement System
-- **[PROFILE_ENHANCEMENT_EXAMPLES.md](./PROFILE_ENHANCEMENT_EXAMPLES.md)** — Real-world examples with full request/response
-- **README.md** — This file
+pytest tests/ -v
+```
 
 ---
 
 ## 🔒 Security Notes
 
-- API keys are stored in `.env` (never committed to git)
+- API keys are stored in `.env` (never committed to git — see `.env.example`)
 - All AI interactions are **human-in-the-loop** — nothing is posted automatically
-- CORS is permissive for MVP; restrict `allow_origins` in production
+- CORS is restricted to configured origins (Chrome extension + localhost)
 - No LinkedIn credentials are accessed or stored
+- LLM calls include automatic retry with exponential backoff
 
 ---
 
-## 📜 Recent Updates History (v1.1.0)
+## 🤝 Contributing
 
-### ✨ New Features (v1.1.0)
-- **Auto-detect from LinkedIn Profile** — Automatically extract name, headline, skills, and experience from your LinkedIn profile page
-- **Clear Buttons** — 8 dedicated clear buttons for quick field management
-- **Profile Enhancement** — AI-powered suggestions to improve your professional summary
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on setup, code quality, and submitting pull requests.
 
-### 🔧 Improvements (v1.1.0)
-- **Accessibility Compliance** — All clear buttons now include:
-  - `type="button"` attributes to prevent accidental form submission
-  - Unique `aria-label` attributes for screen reader support
-  - Valid SVG syntax for proper rendering
-- **Security Hardening** — Removed sensitive raw LLM response data from backend logs and error messages
-- **Job Analysis** — Fixed response validation to properly match LLM output fields
-- **Simplified UI** — Removed floating AI buttons in favor of clean copy-paste workflow
+---
 
-### 🐛 Bug Fixes (v1.1.0)
-- Fixed PII exposure in backend logging and exception messages
-- Corrected job analysis response field mapping
-- Improved content extraction reliability with multiple selector fallbacks
+## 📜 License
 
-MIT — Use freely for personal and commercial projects.
+MIT — See [LICENSE](./LICENSE) for details.

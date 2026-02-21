@@ -5,15 +5,21 @@ Uses the OpenAI-compatible Groq API with Llama 3.3 70B model.
 Groq provides a generous free tier (30 requests/minute).
 """
 
+import asyncio
 import json
 import logging
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, AuthenticationError
 
 from .config import get_settings
 from .prompts import build_comment_prompt, build_job_analysis_prompt, build_profile_enhancement_prompt
 from .models import CommentSuggestion, JobAnalysisResponse, ProfileEnhancementResponse
 
 logger = logging.getLogger(__name__)
+
+# ─── Constants ────────────────────────────────────────────────────────────────
+
+LLM_MAX_RETRIES = 3
+LLM_RETRY_BASE_DELAY = 1.0  # seconds; doubles each retry
 
 
 def _get_client() -> AsyncOpenAI:
@@ -43,6 +49,10 @@ async def _call_llm(
     """
     Send messages to Groq and parse the JSON response.
 
+    Includes automatic retry with exponential backoff for transient errors
+    (rate limits, timeouts, server errors). Retries up to LLM_MAX_RETRIES
+    times with increasing delays.
+
     Args:
         messages: Chat messages to send.
         temperature: Controls randomness. 0 = deterministic, 1 = creative.
@@ -53,40 +63,64 @@ async def _call_llm(
     """
     settings = get_settings()
     client = _get_client()
+    last_error: Exception | None = None
 
-    logger.info("Calling Groq model=%s (temp=%.1f, max_tokens=%d)", settings.groq_model, temperature, max_tokens)
-
-    response = await client.chat.completions.create(
-        model=settings.groq_model,
-        messages=messages,
-        temperature=temperature,
-        max_tokens=max_tokens,
-        response_format={"type": "json_object"},
-    )
-
-    raw = response.choices[0].message.content.strip()
-    logger.debug("LLM raw response: %s", raw[:200])
-
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError as e:
-        logger.error("Failed to parse LLM response as JSON: %s. Raw response: %s", e, raw)
-        raise ValueError(f"AI returned an invalid JSON response. Raw (truncated): {_sanitize_raw(raw)}") from e
-
-    if not isinstance(data, dict):
-        logger.error("LLM response is not a dict: %s. Raw: %s", type(data), raw)
-        raise ValueError(f"Expected JSON object (dict), got {type(data).__name__}. Raw (redacted): <redacted>")
-
-    if expected_keys:
-        missing_keys = expected_keys - set(data.keys())
-        if missing_keys:
-            logger.error("LLM response missing keys: %s. Present keys: %s. Raw: %s", missing_keys, list(data.keys()), raw)
-            raise ValueError(
-                f"LLM response is missing required keys: {', '.join(sorted(missing_keys))}. "
-                f"Expected keys: {', '.join(sorted(expected_keys))}. Raw (truncated): {_sanitize_raw(raw)}"
+    for attempt in range(1, LLM_MAX_RETRIES + 1):
+        try:
+            logger.info(
+                "Calling Groq model=%s (temp=%.1f, max_tokens=%d, attempt=%d/%d)",
+                settings.groq_model, temperature, max_tokens, attempt, LLM_MAX_RETRIES,
             )
 
-    return data
+            response = await client.chat.completions.create(
+                model=settings.groq_model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                response_format={"type": "json_object"},
+            )
+
+            raw = response.choices[0].message.content.strip()
+            logger.debug("LLM raw response: %s", raw[:200])
+
+            try:
+                data = json.loads(raw)
+            except json.JSONDecodeError as e:
+                logger.error("Failed to parse LLM response as JSON: %s. Raw response: %s", e, raw)
+                raise ValueError(f"AI returned an invalid JSON response. Raw (truncated): {_sanitize_raw(raw)}") from e
+
+            if not isinstance(data, dict):
+                logger.error("LLM response is not a dict: %s. Raw: %s", type(data), raw)
+                raise ValueError(f"Expected JSON object (dict), got {type(data).__name__}. Raw (redacted): <redacted>")
+
+            if expected_keys:
+                missing_keys = expected_keys - set(data.keys())
+                if missing_keys:
+                    logger.error("LLM response missing keys: %s. Present keys: %s. Raw: %s", missing_keys, list(data.keys()), raw)
+                    raise ValueError(
+                        f"LLM response is missing required keys: {', '.join(sorted(missing_keys))}. "
+                        f"Expected keys: {', '.join(sorted(expected_keys))}. Raw (truncated): {_sanitize_raw(raw)}"
+                    )
+
+            return data
+
+        except (ValueError, AuthenticationError):
+            # ValueError = bad JSON from LLM; AuthenticationError = invalid API key
+            # Neither will succeed on retry, so fail immediately
+            raise
+        except Exception as e:
+            last_error = e
+            if attempt < LLM_MAX_RETRIES:
+                delay = LLM_RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                logger.warning(
+                    "LLM call failed (attempt %d/%d): %s. Retrying in %.1fs…",
+                    attempt, LLM_MAX_RETRIES, e, delay,
+                )
+                await asyncio.sleep(delay)
+            else:
+                logger.error("LLM call failed after %d attempts: %s", LLM_MAX_RETRIES, e, exc_info=True)
+
+    raise last_error or RuntimeError("LLM call failed after all retries")
 
 
 async def generate_comments(post_text: str, tone: str | None = None) -> list[CommentSuggestion]:

@@ -9,13 +9,18 @@ import logging
 import re
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
 from .database import init_db, get_user_profile, save_user_profile
-from .models import UserProfile, UserProfileUpdate, ProfileEnhancementRequest, ProfileEnhancementResponse
+from .models import (
+    UserProfile, UserProfileUpdate,
+    ProfileEnhancementRequest, ProfileEnhancementResponse,
+    ProfileAnalysisRequest, ProfileEnhanceRequest,
+)
 from .routers import comments, jobs, batch_scoring
+from .services import analyze_profile_text, enhance_profile_text, enhance_profile as enhance_profile_service
 
 
 # ─── Logging Security ──────────────────────────────────────────────────────
@@ -71,7 +76,7 @@ app = FastAPI(
 settings = get_settings()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permissive for MVP; restrict in production
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -112,25 +117,15 @@ async def update_profile(update: UserProfileUpdate):
 
 
 @app.post("/analyze-profile")
-async def analyze_profile(data: dict):
+async def analyze_profile(data: ProfileAnalysisRequest):
     """Analyze raw LinkedIn profile text with AI and return structured data."""
-    from .services import analyze_profile_text
-    raw_text = data.get("raw_text", "")
-    if not raw_text or len(raw_text) < 20:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=400, detail="Not enough profile text to analyze.")
-    return await analyze_profile_text(raw_text)
+    return await analyze_profile_text(data.raw_text)
 
 
 @app.post("/enhance-profile")
-async def enhance_profile(data: dict):
+async def enhance_profile(data: ProfileEnhanceRequest):
     """Get AI-powered suggestions to improve a LinkedIn profile."""
-    from .services import enhance_profile_text
-    raw_text = data.get("raw_text", "")
-    if not raw_text or len(raw_text) < 20:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=400, detail="Not enough profile text to enhance.")
-    return await enhance_profile_text(raw_text)
+    return await enhance_profile_text(data.raw_text)
 
 
 @app.post("/enhance-profile-advanced", response_model=ProfileEnhancementResponse)
@@ -147,8 +142,6 @@ async def enhance_profile_advanced(request: ProfileEnhancementRequest):
     
     Tailored to target role with focus on recruiter visibility and competitive differentiation.
     """
-    from .services import enhance_profile as enhance_profile_service
-    
     safe_target_role = sanitize_log_input(request.target_role)
     logger.info(f"Profile enhancement requested for target role: {safe_target_role}")
     

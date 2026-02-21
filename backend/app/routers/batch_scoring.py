@@ -16,6 +16,12 @@ from typing import Optional, List
 from datetime import datetime
 import logging
 
+from ..models import (
+    BatchScoreRequest,
+    TrackJobRequest,
+    JobUpdateRequest,
+    BatchSaveJobsRequest,
+)
 from ..services import match_jobs_batch_service
 from ..database import (
     save_tracked_job,
@@ -31,71 +37,19 @@ logger = logging.getLogger(__name__)
 
 
 @router.post("/batch-score-jobs")
-async def batch_score_jobs(request: dict):
-    """
-    Score multiple jobs against user profile in batch.
-
-    Called by LinkedIn job page content script when scanning search results.
-    Performs parallel analysis on multiple jobs for fast feedback.
-
-    Request:
-    {
-      "jobs": [
-        {
-          "job_id": "3792345678",
-          "job_title": "Senior Backend Engineer",
-          "company_name": "TechCorp",
-          "location": "SF, CA",
-          "description": "..."
-        }
-      ],
-      "user_profile": {
-        "skills": ["Python", "FastAPI", "PostgreSQL"],
-        "experience": "8 years backend development",
-        "target_role": "Senior Backend Engineer"
-      },
-      "quick_mode": false
-    }
-
-    Response:
-    {
-      "results": [
-        {
-          "job_id": "3792345678",
-          "match_score": 82,
-          "ranking_level": "high",
-          "missing_skills": ["Kubernetes", "Go"],
-          "matched_skills": ["Python", "FastAPI"],
-          "summary": "Strong match..."
-        }
-      ],
-      "batch_id": "batch_uuid",
-      "processed_count": 1,
-      "processing_time_ms": 1234
-    }
-    """
+async def batch_score_jobs(request: BatchScoreRequest):
+    """Score multiple jobs against user profile in batch."""
     try:
-        jobs = request.get("jobs", [])
-        user_profile = request.get("user_profile", {})
-        quick_mode = request.get("quick_mode", False)
+        jobs = [job.model_dump() for job in request.jobs]
+        user_profile = request.user_profile.model_dump()
 
-        if not jobs:
-            raise HTTPException(status_code=400, detail="jobs array is required")
+        logger.info(f"[Batch Scoring] Processing {len(jobs)} jobs (quick_mode={request.quick_mode})")
 
-        if len(jobs) > 50:
-            raise HTTPException(
-                status_code=400,
-                detail="Batch size cannot exceed 50 jobs"
-            )
-
-        logger.info(f"[Batch Scoring] Processing {len(jobs)} jobs (quick_mode={quick_mode})")
-
-        # Call batch matching service
         start_time = datetime.utcnow()
         results = await match_jobs_batch_service(
             jobs=jobs,
             user_profile=user_profile,
-            quick_mode=quick_mode,
+            quick_mode=request.quick_mode,
         )
         elapsed_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
 
@@ -123,30 +77,12 @@ async def batch_score_jobs(request: dict):
 
 
 @router.post("/track")
-async def track_job(request: dict):
-    """
-    Save an analyzed job to user's tracking dashboard.
-
-    Called after job analysis in the extension popup.
-    Request:
-    {
-      "job_id": "3792345678",
-      "job_title": "Senior Backend Engineer",
-      "company_name": "TechCorp",
-      "location": "San Francisco, CA",
-      "description": "Full job description...",
-      "job_url": "https://...",
-      "match_percentage": 82,
-      "ranking_level": "high",
-      "matched_skills": ["Python", "FastAPI"],
-      "missing_skills": ["Kubernetes"],
-      "status": "new",
-      "source": "manual"
-    }
-    """
+async def track_job(request: TrackJobRequest):
+    """Save an analyzed job to user's tracking dashboard."""
     try:
-        job = await save_tracked_job(request)
-        logger.info(f"[Track Job] Saved {request['job_title']} at {request['company_name']}")
+        job_data = request.model_dump()
+        job = await save_tracked_job(job_data)
+        logger.info(f"[Track Job] Saved {request.job_title} at {request.company_name}")
         return {"success": True, "job": job}
 
     except Exception as e:
@@ -237,24 +173,10 @@ async def get_job(job_id: str):
 
 
 @router.put("/{job_id}")
-async def update_job(job_id: str, updates: dict):
-    """
-    Update job metadata (cannot re-analyze, must call /analyze-job again).
-
-    Can update: status, notes, application_date, rejection_reason, etc.
-    Cannot update: job_id, match_percentage, skills (must re-analyze)
-    """
+async def update_job(job_id: str, updates: JobUpdateRequest):
+    """Update job metadata (status, notes, dates, salary)."""
     try:
-        # Only allow certain fields to be updated
-        allowed_fields = {
-            "status", "notes", "application_date", "rejection_date",
-            "rejection_reason", "interview_date", "interview_stage",
-            "salary_min", "salary_max"
-        }
-
-        filtered_updates = {
-            k: v for k, v in updates.items() if k in allowed_fields
-        }
+        filtered_updates = updates.model_dump(exclude_none=True)
 
         job = await update_tracked_job(job_id, filtered_updates)
         if not job:
@@ -289,23 +211,12 @@ async def delete_job(job_id: str):
 
 
 @router.post("/batch")
-async def batch_save_jobs(request: dict):
-    """
-    Bulk save multiple jobs (for importing/migration).
-
-    Max 100 jobs per request.
-    """
+async def batch_save_jobs(request: BatchSaveJobsRequest):
+    """Bulk save multiple jobs (for importing/migration, max 100)."""
     try:
-        jobs = request.get("jobs", [])
-        if not jobs or len(jobs) > 100:
-            raise HTTPException(
-                status_code=400,
-                detail="jobs array required, max 100 items"
-            )
-
         saved_jobs = []
-        for job_data in jobs:
-            job = await save_tracked_job(job_data)
+        for job_req in request.jobs:
+            job = await save_tracked_job(job_req.model_dump())
             saved_jobs.append(job)
 
         logger.info(f"[Batch Save] Saved {len(saved_jobs)} jobs")
