@@ -208,3 +208,4 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on setup, code quality, 
 ## 📜 License
 
 MIT — See [LICENSE](./LICENSE) for details.
+# copilot-for-personal-use-
